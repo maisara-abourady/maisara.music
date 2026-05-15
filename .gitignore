@@ -3,3 +3,9 @@
 
 # Cloudflare Wrangler
 .wrangler/
+
+# Claude Code scratch
+.claude/
+
+# Design working files
+*.psd
