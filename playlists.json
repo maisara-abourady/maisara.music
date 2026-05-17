@@ -16,6 +16,12 @@
   },
   "yugen": {
     "tabTitle": "Yūgen",
-    "tracks": []
+    "tracks": [
+      {
+        "title": "An Ethereal Sunset",
+        "description": "A really carefully-created blend.",
+        "url": "https://pub-c18c28ff9d714d3fb630c2546d440564.r2.dev/yugen-01.mp3"
+      }
+    ]
   }
 }

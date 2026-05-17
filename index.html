@@ -310,21 +310,10 @@
       to   { transform: translate(-50%, 0) rotate(360deg); }
     }
 
-    .vinyl-indicator {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 6;
-      pointer-events: none;
-      opacity: 0;
-      filter: drop-shadow(0 0 18px rgba(0,0,0,0.7));
-      transition: opacity 320ms;
-    }
+    /* Visual play/pause glyph removed — the click target stays the whole
+       vinyl-wrap. Keeping the element in the DOM (display: none) so any
+       JS that toggles its state is harmless. */
+    .vinyl-indicator { display: none; }
 
     /* Paused & armed: play triangle only visible on hover */
     .vinyl-wrap.armed .vinyl-indicator { opacity: 0; }
