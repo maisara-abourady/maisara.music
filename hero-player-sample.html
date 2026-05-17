@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<!--
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ SAMPLE FILE — NOT THE LIVE SITE                                  │
+  │                                                                  │
+  │ Hero = listen. Vinyl player on the left (cropped portrait,       │
+  │ rotating cue + grooves while playing, play/pause overlay that    │
+  │ ACTIVATES only when a track is loaded). Track info panel sits    │
+  │ below the vinyl.                                                 │
+  │                                                                  │
+  │ Right side: tabs + track list ported from the legacy listen      │
+  │ section. Click any track → loads + plays it; vinyl info panel    │
+  │ updates with title/subtitle.                                     │
+  │                                                                  │
+  │ Side nav fixed right (Poppins eyebrow). Top: brand + socials,    │
+  │ no nav. Audio source: assets/audio/intro.wav (demo).             │
+  └──────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAISARA — Player Hero Experiment v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: 'Maisara Signature';
+      src: url('assets/fonts/maisara.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:           #0a0e1a;
+      --bg-alt:       #0c1120;
+      --accent:       #74BFFF;
+      --accent-dim:   #77b0d1;
+      --accent-glow:  rgba(116,191,255,0.12);
+      --text:         #ffffff;
+      --text-muted:   rgba(255,255,255,0.5);
+      --text-subtle:  rgba(255,255,255,0.22);
+      --border:       rgba(255,255,255,0.07);
+    }
+
+    html, body {
+      width: 100vw;
+      background: var(--bg-alt);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.028;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ════════════════════════════════
+       HERO  (= listen surface) — pinned to 100vh, no internal scroll
+    ════════════════════════════════ */
+    .hero {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-color: var(--bg-alt);
+      background-image:
+        radial-gradient(circle at 86% 14%, var(--accent-glow), transparent 50%),
+        url('assets/rest-bg.png');
+      background-size: auto, cover;
+      background-position: center, center;
+      background-repeat: no-repeat;
+    }
+
+    /* ── Top band ── */
+    .hero-top {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 80px 0;
+    }
+
+    .hero-brand {
+      font-family: 'Maisara Signature', 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 400;
+      letter-spacing: 0.23em;
+      color: var(--text);
+      text-decoration: none;
+      line-height: 0.9;
+    }
+
+    .hero-socials {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+    }
+
+    .hero-socials .icon-dot {
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(255,255,255,0.45);
+      cursor: pointer;
+      transition: border-color 200ms, background 200ms;
+    }
+
+    .hero-socials .icon-dot:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ── Body: vinyl + info on left, tracks on right ──
+       Right padding bumped so the content clears the fixed side nav.
+       Min-height: 0 lets the grid shrink to fit available vertical space. */
+    .hero-body {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) 1fr;
+      align-items: center;
+      gap: 64px;
+      padding: 24px 200px 80px 80px;
+    }
+
+    /* ════════════════════════════════
+       VINYL (left column) — bigger than v1, face-centered crop
+    ════════════════════════════════ */
+    .vinyl-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      min-height: 0;
+    }
+
+    /* Whole vinyl is the play/pause CTA (when a track is loaded).
+       Size fits the smaller of vertical and horizontal space. */
+    .vinyl-wrap {
+      width:  min(58vh, 46vw, 640px);
+      height: min(58vh, 46vw, 640px);
+      position: relative;
+      cursor: default;
+    }
+
+    .vinyl-wrap.armed { cursor: pointer; }
+
+    /* Outer groove ring + dark backing for the disk —
+       gives the transparent portrait a vinyl-like surface to sit on. */
+    .vinyl-grooves {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%),
+        repeating-radial-gradient(
+          circle at 50% 50%,
+          transparent 0,
+          transparent 3px,
+          rgba(255,255,255,0.03) 3px,
+          rgba(255,255,255,0.03) 4px
+        ),
+        radial-gradient(circle at 50% 50%, #0a0e1a 0%, #050810 75%, #02050a 100%);
+      animation: spin-grooves 1.8s linear infinite paused;
+      pointer-events: none;
+      z-index: 1;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.06),
+        0 0 80px rgba(0,0,0,0.7);
+    }
+
+    /* Inner mask for the cropped portrait */
+    .vinyl-face {
+      position: absolute;
+      inset: 18px;
+      border-radius: 50%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* New asset: vinyl-face.png — cut-out portrait, transparent bg.
+       Face is well-centered horizontally; shifted slightly up vertically.
+       Height 135% zooms in on the face. */
+    .vinyl-face img {
+      position: absolute;
+      height: 135%;
+      width: auto;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -38%);
+      filter: contrast(1.05) saturate(0.95);
+    }
+
+    /* Edge vignette over the cropped face */
+    .vinyl-face::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.45);
+      pointer-events: none;
+    }
+
+    /* Rotating cue line — starts at ~30% of radius, no center dot */
+    .vinyl-cue {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1px;
+      height: 50%;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent 30%,
+        var(--accent) 30%,
+        var(--accent) 55%,
+        rgba(116,191,255,0) 100%
+      );
+      transform-origin: top center;
+      transform: translate(-50%, 0) rotate(0deg);
+      animation: spin-cue 1.8s linear infinite paused;
+      z-index: 4;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(116,191,255,0.4);
+    }
+
+    .vinyl-wrap.playing .vinyl-grooves,
+    .vinyl-wrap.playing .vinyl-cue { animation-play-state: running; }
+
+    @keyframes spin-grooves {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes spin-cue {
+      from { transform: translate(-50%, 0) rotate(0deg); }
+      to   { transform: translate(-50%, 0) rotate(360deg); }
+    }
+
+    /* Play/pause indicator — purely visual, no backdrop, drop-shadow only
+       so it stays legible without obscuring the face. */
+    .vinyl-indicator {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+      pointer-events: none;
+      opacity: 0;
+      filter: drop-shadow(0 0 18px rgba(0,0,0,0.7));
+      transition: opacity 320ms;
+    }
+
+    /* Show subtly when armed (track loaded) */
+    .vinyl-wrap.armed .vinyl-indicator { opacity: 0.55; }
+    .vinyl-wrap.armed:hover .vinyl-indicator { opacity: 0.95; }
+
+    /* While playing, indicator stays at low opacity — face shouldn't be covered */
+    .vinyl-wrap.armed.playing .vinyl-indicator { opacity: 0.25; }
+    .vinyl-wrap.armed.playing:hover .vinyl-indicator { opacity: 0.85; }
+
+    .vinyl-indicator .glyph-play {
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 26px 0 26px 38px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 8px;
+    }
+
+    .vinyl-indicator .glyph-pause {
+      display: none;
+      width: 30px; height: 38px;
+      background:
+        linear-gradient(#fff, #fff) left/9px 100% no-repeat,
+        linear-gradient(#fff, #fff) right/9px 100% no-repeat;
+    }
+
+    .vinyl-wrap.playing .vinyl-indicator .glyph-play  { display: none; }
+    .vinyl-wrap.playing .vinyl-indicator .glyph-pause { display: block; }
+
+    /* ════════════════════════════════
+       INFO PANEL — below vinyl, shows current track meta + progress
+    ════════════════════════════════ */
+    .info-panel {
+      width: min(58vh, 46vw, 640px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+      opacity: 0.45;
+      transition: opacity 360ms;
+    }
+
+    .info-panel.armed { opacity: 1; }
+
+    .info-eyebrow {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+    }
+
+    .info-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.55rem;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .info-sub {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+    }
+
+    .info-progress-row {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .info-time {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .info-progress {
+      height: 1px;
+      background: var(--border);
+      position: relative;
+    }
+
+    .info-progress-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(116,191,255,0.5);
+      transition: width 220ms linear;
+    }
+
+    /* ════════════════════════════════
+       TRACK LIST (right column) — tabs + tracks (port of legacy listen)
+    ════════════════════════════════ */
+    .tracks-column {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-width: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 44px;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .tab {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.3rem, 1.9vw, 1.7rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-subtle);
+      background: none;
+      border: none;
+      padding: 0 0 8px;
+      cursor: pointer;
+      position: relative;
+      transition: color 320ms;
+    }
+
+    .tab::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      bottom: -21px;
+      height: 1px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 380ms ease;
+    }
+
+    .tab[aria-selected="true"] { color: var(--text); }
+    .tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .track {
+      display: grid;
+      grid-template-columns: 38px 1fr 90px;
+      align-items: center;
+      column-gap: 18px;
+      padding: 18px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 300ms;
+    }
+
+    .track:first-child { border-top: 1px solid var(--border); }
+    .track:hover { background: rgba(116,191,255,0.025); }
+    .track.loaded { background: rgba(116,191,255,0.04); }
+
+    .track-num {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: var(--text-subtle);
+      transition: color 250ms;
+    }
+
+    .track:hover .track-num,
+    .track.loaded .track-num { color: var(--accent); }
+
+    .track-title-group { min-width: 0; }
+
+    .track-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .track.loaded .track-title { color: var(--accent); font-style: italic; }
+
+    .track-sub {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .track-listen {
+      justify-self: end;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: border-color 250ms, color 250ms, background 250ms;
+    }
+
+    .track:hover .track-listen,
+    .track.loaded .track-listen {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Tagline ── */
+    .hero-tagline {
+      position: absolute;
+      bottom: 28px;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 0 60px;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(1.05rem, 1.45vw, 1.35rem);
+      line-height: 1.4;
+      letter-spacing: 0.09em;
+      color: rgba(255,255,255,0.55);
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════
+       SIDE NAV  — fixed right, Poppins eyebrow
+    ════════════════════════════════ */
+    .side-nav {
+      position: fixed;
+      top: 50%;
+      right: 28px;
+      transform: translateY(-50%);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 22px;
+    }
+
+    .side-nav button {
+      display: inline-grid;
+      grid-template-columns: auto 18px auto;
+      align-items: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+    }
+
+    .side-nav .numeral {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+      justify-self: end;
+      transition: color 320ms;
+    }
+
+    .side-nav .label {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      grid-column: 3;
+      transition: color 320ms;
+    }
+
+    .side-nav button::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      margin-right: 12px;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 380ms ease;
+    }
+
+    .side-nav button:hover .label   { color: var(--text); }
+    .side-nav button:hover .numeral { color: var(--accent-dim); }
+    .side-nav button.active .label   { color: var(--accent); }
+    .side-nav button.active .numeral { color: var(--accent); }
+    .side-nav button.active::before  { width: 40px; }
+
+    .sample-marker {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      background: rgba(10,14,26,0.7);
+      backdrop-filter: blur(12px);
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sample-marker">Sample · Vinyl player v2 · Not the live site</div>
+
+  <!-- Side nav -->
+  <nav class="side-nav">
+    <button class="active" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+      <span class="numeral">I</span>
+      <span class="label">Listen</span>
+    </button>
+    <button><span class="numeral">II</span><span class="label">Philosophy</span></button>
+    <button><span class="numeral">III</span><span class="label">Sound</span></button>
+    <button><span class="numeral">IV</span><span class="label">Discography</span></button>
+    <button><span class="numeral">V</span><span class="label">Bookings</span></button>
+  </nav>
+
+  <div class="hero">
+
+    <header class="hero-top">
+      <a class="hero-brand" href="#">MAISARA</a>
+      <div class="hero-socials" aria-label="Social links">
+        <span class="icon-dot" title="Instagram"></span>
+        <span class="icon-dot" title="SoundCloud"></span>
+        <span class="icon-dot" title="YouTube"></span>
+        <span class="icon-dot" title="Spotify"></span>
+        <span class="icon-dot" title="Beatport"></span>
+      </div>
+    </header>
+
+    <div class="hero-body">
+
+      <!-- Left column: vinyl + info panel -->
+      <div class="vinyl-column">
+        <div class="vinyl-wrap" id="vinyl" role="button" aria-label="Play / pause">
+          <div class="vinyl-grooves"></div>
+          <div class="vinyl-face">
+            <img src="assets/vinyl-face.png" alt="MAISARA portrait">
+          </div>
+          <div class="vinyl-cue"></div>
+          <div class="vinyl-indicator">
+            <span class="glyph-play"  aria-hidden="true"></span>
+            <span class="glyph-pause" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="info-panel" id="infoPanel">
+          <span class="info-eyebrow" id="infoEyebrow">Nothing on deck</span>
+          <span class="info-title"   id="infoTitle">Select a track to begin</span>
+          <span class="info-sub"     id="infoSub">—</span>
+          <div class="info-progress-row">
+            <span class="info-time" id="infoCurrent">0:00</span>
+            <div class="info-progress"><div class="info-progress-fill" id="infoFill"></div></div>
+            <span class="info-time" id="infoDuration">0:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: tabs + track list -->
+      <div class="tracks-column">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" id="tab-warmup" aria-controls="panel-warmup" aria-selected="true">Warm-up Sessions</button>
+          <button class="tab" role="tab" id="tab-yugen"  aria-controls="panel-yugen"  aria-selected="false">Yūgen</button>
+        </div>
+
+        <div class="tab-panel active" id="panel-warmup">
+          <div class="track-list">
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up I" data-sub="The Opening Hours" data-eyebrow="Now playing">
+              <span class="track-num">01</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up I</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up II" data-sub="The Opening Hours" data-eyebrow="Now playing">
+              <span class="track-num">02</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up II</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up III" data-sub="The Opening Hours" data-eyebrow="Now playing">
+              <span class="track-num">03</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up III</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="panel-yugen">
+          <div class="track-list">
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled I" data-sub="Yūgen Series" data-eyebrow="Now playing">
+              <span class="track-num">01</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled I</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled II" data-sub="Yūgen Series" data-eyebrow="Now playing">
+              <span class="track-num">02</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled II</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled III" data-sub="Yūgen Series" data-eyebrow="Now playing">
+              <span class="track-num">03</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled III</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen">Listen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="hero-tagline">For hearts that already know, without knowing.</p>
+
+  </div>
+
+  <script>
+    /* ── Tabs ── */
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        const target = t.getAttribute('aria-controls');
+        document.querySelectorAll('.tab').forEach(x =>
+          x.setAttribute('aria-selected', x === t ? 'true' : 'false'));
+        document.querySelectorAll('.tab-panel').forEach(p =>
+          p.classList.toggle('active', p.id === target));
+      });
+    });
+
+    /* ── Player ── */
+    const vinyl       = document.getElementById('vinyl');
+    const infoPanel   = document.getElementById('infoPanel');
+    const infoEyebrow = document.getElementById('infoEyebrow');
+    const infoTitle   = document.getElementById('infoTitle');
+    const infoSub     = document.getElementById('infoSub');
+    const infoCurrent = document.getElementById('infoCurrent');
+    const infoDur     = document.getElementById('infoDuration');
+    const infoFill    = document.getElementById('infoFill');
+
+    let audio = null;
+    let loadedTrack = null;
+
+    function fmt(s) {
+      if (!isFinite(s)) return '0:00';
+      const m = Math.floor(s / 60);
+      const r = Math.floor(s % 60);
+      return `${m}:${r.toString().padStart(2,'0')}`;
+    }
+
+    function loadTrack(trackEl) {
+      // Stop current
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+        audio = null;
+      }
+      // Reset previously loaded track row
+      if (loadedTrack && loadedTrack !== trackEl) loadedTrack.classList.remove('loaded');
+
+      loadedTrack = trackEl;
+      trackEl.classList.add('loaded');
+
+      // Update info panel
+      infoEyebrow.textContent = trackEl.dataset.eyebrow || 'Now playing';
+      infoTitle.textContent   = trackEl.dataset.title;
+      infoSub.textContent     = trackEl.dataset.sub;
+      infoPanel.classList.add('armed');
+
+      // Build new audio
+      audio = new Audio(trackEl.dataset.src);
+
+      audio.addEventListener('loadedmetadata', () => {
+        infoDur.textContent = fmt(audio.duration);
+      });
+      audio.addEventListener('play',  () => vinyl.classList.add('playing'));
+      audio.addEventListener('pause', () => {
+        if (!audio.ended) vinyl.classList.remove('playing');
+      });
+      audio.addEventListener('ended', () => {
+        vinyl.classList.remove('playing');
+        infoFill.style.width = '0%';
+        infoCurrent.textContent = '0:00';
+      });
+      audio.addEventListener('timeupdate', () => {
+        if (!audio.duration) return;
+        infoFill.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+        infoCurrent.textContent = fmt(audio.currentTime);
+      });
+
+      vinyl.classList.add('armed');
+
+      audio.play().catch(err => {
+        console.warn('Audio failed:', trackEl.dataset.src, err.message);
+      });
+    }
+
+    // Track row clicks → load + autoplay
+    document.querySelectorAll('.track').forEach(tr => {
+      tr.addEventListener('click', () => loadTrack(tr));
+    });
+
+    // Whole vinyl is the play/pause toggle — only operative when armed
+    vinyl.addEventListener('click', () => {
+      if (!audio) return;
+      if (audio.paused) audio.play();
+      else              audio.pause();
+    });
+  </script>
+
+</body>
+</html>

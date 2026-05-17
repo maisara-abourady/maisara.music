@@ -9,3 +9,6 @@
 
 # Design working files
 *.psd
+
+# Local audio source files — playback is served from R2, not the repo
+assets/audio/

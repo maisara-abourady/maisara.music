@@ -7,7 +7,7 @@
   <meta name="description" content="MAISARA — Progressive House Artist & DJ">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baskervville:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 
   <style>
     @font-face {
@@ -36,22 +36,19 @@
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       overflow-x: hidden;
       width: 100vw;
       background: var(--bg);
       color: var(--text);
-      overscroll-behavior: none; /* belt-and-suspenders with the JS wheel/touch lock */
     }
 
     /* Hide scrollbar (scroll input is JS-locked; only programmatic scrollTo navigates) */
-    html { overscroll-behavior: none; }
     body::-webkit-scrollbar { display: none; }
     body { scrollbar-width: none; }
 
-    /* Each section fills the viewport so smooth-scroll between them feels like panels.
-       overflow: hidden guarantees no in-section scroll regardless of content height. */
-    .section { min-height: 100vh; overflow: hidden; }
+    /* Each section fills the viewport so smooth-scroll between them feels like panels */
+    .section { min-height: 100vh; }
 
     /* ── Grain overlay ── */
     body::after {
@@ -86,7 +83,6 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      isolation: isolate; /* contains mix-blend-mode children so they blend with hero bg, not the page */
       background-color: var(--bg-alt);
       background-image:
         radial-gradient(circle at 86% 14%, rgba(116,191,255,0.10), transparent 50%),
@@ -96,56 +92,25 @@
       background-repeat: no-repeat;
     }
 
-    /* ── Global sticky header: logo (left) + socials (right) ──
-       Fixed across all sections; sits above content via z-index 1100. */
-    .site-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1100;
+    /* ── Top band: brand + socials, no nav ── */
+    .hero-top {
+      position: relative;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 24px 80px;
-      pointer-events: none; /* let the page receive pointer events except on header children below */
+      padding: 28px 80px 0;
     }
 
-    .site-header > * { pointer-events: auto; }
-
-    .site-header-logo {
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-    }
-
-    .site-header-logo img {
-      height: 44px;
-      width: auto;
-      display: block;
-    }
-
-    /* Brand sits centered over the body, anchored just below the socials band.
-       Absolutely positioned against .hero (which is position: relative), so it
-       doesn't displace the grid below. */
     .hero-brand {
-      position: absolute;
-      bottom: 48px;
-      right: 80px;
-      transform: none;
-      z-index: 20; /* paints after .hero-body (z-index: 10) so the blend's backdrop includes the photo, not just the hero bg */
       font-family: 'Maisara Signature', 'Cormorant Garamond', serif;
-      font-size: clamp(3.2rem, 11.2vw, 14.4rem);
+      font-size: 1.9rem;
       font-weight: 400;
       letter-spacing: 0.23em;
       color: var(--text);
       text-decoration: none;
       line-height: 0.9;
       display: inline-block;
-      mix-blend-mode: overlay;
-      /* Cancel trailing letter-spacing so the visible last-glyph edge,
-         not the empty letter-spacing slot, aligns with `right: 80px`. */
-      margin-right: -0.23em;
     }
 
     .hero-socials {
@@ -187,10 +152,7 @@
 
     .icon-wrap.beatport svg { width: 15.7px; height: 17px; }
 
-    /* ── Body grid: vinyl + info (left) | tabs + tracks (right) ──
-       Two rows so the tracks-column can be anchored to the bottom band.
-       Spacer row sets how far down the tracks-column starts; vinyl is shifted
-       up by .vinyl-column's padding-bottom so head and tracks both sit higher. */
+    /* ── Body grid: vinyl + info (left) | tabs + tracks (right) ── */
     .hero-body {
       position: relative;
       z-index: 10;
@@ -198,22 +160,16 @@
       min-height: 0;
       display: grid;
       grid-template-columns: minmax(360px, 1fr) 1fr;
-      grid-template-rows: 20% 1fr;
-      gap: 0 64px;
+      align-items: center;
+      gap: 64px;
       padding: 24px 200px 80px 80px;
     }
 
     .vinyl-column {
-      grid-column: 1;
-      grid-row: 1 / -1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 0;
-      /* Trims the bottom of the centering area, shifting the vinyl visually
-         up (~5vh) so the head sits closer to the top of the page. */
-      padding-bottom: 10vh;
     }
 
     /* Whole vinyl is the play/pause CTA when armed (a track is loaded).
@@ -239,6 +195,7 @@
       z-index: 2;
     }
 
+    /* Sample variant: image multiplied by 1.4x (115% → 161%) */
     .vinyl-face img {
       position: absolute;
       height: 161%;
@@ -250,8 +207,7 @@
     }
 
     /* Cue line: starts at ~30% of radius (not from dead center), fades toward edge.
-       z-index high enough to overlay the info panel — cue is forbidden to be intersected.
-       Hidden by default — only revealed once a track is actually playing. */
+       z-index high enough to overlay the info panel — cue is forbidden to be intersected. */
     .vinyl-cue {
       position: absolute;
       top: 50%;
@@ -272,34 +228,10 @@
       z-index: 7;
       pointer-events: none;
       box-shadow: 0 0 8px rgba(116,191,255,0.4);
-      opacity: 0;
-      transition: opacity 320ms ease;
     }
 
     .vinyl-wrap.playing .vinyl-grooves,
     .vinyl-wrap.playing .vinyl-cue { animation-play-state: running; }
-    .vinyl-wrap.playing .vinyl-cue { opacity: 1; }
-
-    /* Loading state — soft pulsing accent dot at center while audio is fetching/buffering */
-    .vinyl-wrap.loading::after {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent);
-      transform: translate(-50%, -50%);
-      z-index: 8;
-      box-shadow: 0 0 24px rgba(116,191,255,0.7);
-      animation: vinyl-loading 1.05s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    @keyframes vinyl-loading {
-      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.85); }
-      50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.45); }
-    }
 
     @keyframes spin-grooves {
       from { transform: rotate(0deg); }
@@ -314,11 +246,6 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       z-index: 6;
       pointer-events: none;
       opacity: 0;
@@ -337,10 +264,9 @@
     .vinyl-indicator .glyph-play {
       width: 0; height: 0;
       border-style: solid;
-      border-width: 22px 0 22px 32px;
+      border-width: 26px 0 26px 38px;
       border-color: transparent transparent transparent #fff;
-      margin-left: 0;
-      transform: translateX(5px);
+      margin-left: 8px;
     }
 
     .vinyl-indicator .glyph-pause {
@@ -360,7 +286,7 @@
       position: absolute;
       left: 0;
       right: 0;
-      bottom: -8vh; /* sits below the vinyl so the head/photo isn't covered by the gradient veil */
+      bottom: 0;
       z-index: 3;
       display: flex;
       flex-direction: column;
@@ -382,7 +308,7 @@
     .info-panel.armed { opacity: 1; }
 
     .info-eyebrow {
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.55rem;
       font-weight: 600;
       letter-spacing: 0.36em;
@@ -400,7 +326,7 @@
     }
 
     .info-sub {
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.6rem;
       font-weight: 600;
       letter-spacing: 0.24em;
@@ -418,7 +344,7 @@
     }
 
     .info-time {
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.6rem;
       letter-spacing: 0.08em;
       color: var(--text-muted);
@@ -440,24 +366,12 @@
       transition: width 220ms linear;
     }
 
-    /* ── Tracks column ──
-       Lives in row 2 only (top edge at 25% of hero-body).
-       Height capped so the panel never extends past the vinyl's bottom edge:
-       from the 25% mark down to vinyl-center + V/2 = 25% + V/2.
-       (Vinyl-column is centered in hero-body, so its center ≈ 50%.)
-       --track-row-h drives the playlist max-height — see .tab-panel.active. */
+    /* ── Tracks column ── */
     .tracks-column {
-      grid-column: 2;
-      grid-row: 2 / -1;
-      align-self: start;
       display: flex;
       flex-direction: column;
       gap: 32px;
       min-width: 0;
-      min-height: 0;
-      height: calc(25% + min(37vh, 25vw, 360px));
-      max-height: 100%;
-      --track-row-h: 77px;
     }
 
     .tabs {
@@ -498,37 +412,12 @@
     .tab[aria-selected="true"] { color: var(--text); }
     .tab[aria-selected="true"]::after { transform: scaleX(1); }
 
-    /* Each panel becomes the scrollable region so the tab headers above stay put
-       and the section's vertical center stays anchored when content height shifts.
-       max-height = 2.5 rows so the half-visible third row hints at scrollability. */
     .tab-panel { display: none; }
-    .tab-panel.active {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      max-height: calc(var(--track-row-h, 77px) * 2.5);
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior: contain; /* keeps wheel from bleeding to the page when the panel hits its scroll end */
-      scrollbar-width: none;
-    }
-    .tab-panel.active::-webkit-scrollbar { display: none; }
+    .tab-panel.active { display: block; }
 
     .track-list {
       display: flex;
       flex-direction: column;
-    }
-
-    .track-empty {
-      padding: 28px 4px;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 1.1rem;
-      color: var(--text-subtle);
-      text-align: center;
     }
 
     .track {
@@ -536,7 +425,7 @@
       grid-template-columns: 38px 1fr 90px;
       align-items: center;
       column-gap: 18px;
-      padding: 18px 28px;
+      padding: 18px 4px;
       border-bottom: 1px solid var(--border);
       cursor: pointer;
       transition: background 300ms;
@@ -570,7 +459,6 @@
     .track.loaded .track-title { color: var(--accent); font-style: italic; }
 
     .track-sub {
-      font-family: 'DM Sans', sans-serif;
       font-size: 0.55rem;
       font-weight: 600;
       letter-spacing: 0.22em;
@@ -580,7 +468,8 @@
       margin-top: 4px;
     }
 
-    /* Per-track play button — circular play triangle. Always visible. */
+    /* Per-track play button — circular play triangle.
+       Hidden by default; shown on row hover or when track is loaded. */
     .track-listen {
       justify-self: end;
       width: 36px;
@@ -593,8 +482,12 @@
       align-items: center;
       justify-content: center;
       padding: 0;
-      transition: border-color 250ms, background 250ms;
+      opacity: 0;
+      transition: opacity 250ms, border-color 250ms, background 250ms;
     }
+
+    .track:hover .track-listen,
+    .track.loaded .track-listen { opacity: 1; }
 
     .track-listen::before {
       content: '';
@@ -628,16 +521,17 @@
         linear-gradient(var(--accent), var(--accent)) left/3px 100% no-repeat,
         linear-gradient(var(--accent), var(--accent)) right/3px 100% no-repeat;
       margin-left: 0;
-      transform: none;
     }
 
     /* ── Tagline (centered along the very bottom of the hero, full width) ── */
     .hero-tagline {
       position: absolute;
       bottom: 32px;
-      right: 80px;
+      left: 0;
+      right: 0;
       z-index: 10;
-      text-align: right;
+      padding: 0 60px;
+      text-align: center;
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-weight: 300;
@@ -646,8 +540,6 @@
       letter-spacing: 0.09em;
       color: rgba(255,255,255,0.6);
       pointer-events: none;
-      /* Cancel trailing letter-spacing so the period sits flush with right:80px. */
-      margin-right: -0.09em;
     }
 
     /* ── Mobile menu button ── */
@@ -721,6 +613,29 @@
        Replaces the old sticky top bar. Both fade in once the user
        leaves the hero. Side rail = chapter-marker style.
     ════════════════════════════════ */
+    /* Floating brand: only on non-hero sections (hero has its own brand in hero-top) */
+    .floating-brand {
+      position: fixed;
+      top: 32px;
+      left: 80px;
+      z-index: 1100;
+      font-family: 'Maisara Signature', 'Cormorant Garamond', serif;
+      font-size: 1.45rem;
+      font-weight: 400;
+      letter-spacing: 0.23em;
+      color: var(--text);
+      text-decoration: none;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 380ms ease, visibility 380ms ease;
+    }
+    .floating-brand.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
     /* Side nav: always visible (no hero/non-hero gating) */
     .side-nav {
       position: fixed;
@@ -746,7 +661,7 @@
     }
 
     .side-nav .numeral {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.5rem;
       font-weight: 600;
       letter-spacing: 0.3em;
@@ -757,7 +672,7 @@
     }
 
     .side-nav .label {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.62rem;
       font-weight: 600;
       letter-spacing: 0.25em;
@@ -1061,7 +976,7 @@
     }
 
     .view-all-btn {
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.1em;
@@ -1217,7 +1132,7 @@
       display: inline-flex;
       align-items: center;
       gap: 14px;
-      font-family: 'Baskervville', serif;
+      font-family: 'Poppins', sans-serif;
       font-size: 0.75rem;
       font-weight: 600;
       letter-spacing: 0.12em;
@@ -1294,8 +1209,7 @@
         background-position: 50% top;
       }
 
-      .site-header { padding: 16px 24px; }
-      .site-header-logo img { height: 32px; }
+      .hero-header { padding: 20px 24px 0; }
       .hero-brand { font-size: 1.2rem; }
       .hero-nav { display: none; }
       .hero-socials { display: none; }
@@ -1320,6 +1234,7 @@
         letter-spacing: 0.08em;
       }
 
+      .floating-brand { display: none; }
       .side-nav { display: none; }
 
       .section { padding: 80px 6vw; }
@@ -1357,35 +1272,13 @@
 
 <body>
 
+  <div style="position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:9999;font-family:'Poppins',sans-serif;font-size:0.5rem;font-weight:600;letter-spacing:0.36em;text-transform:uppercase;color:#77b0d1;background:rgba(10,14,26,0.7);backdrop-filter:blur(12px);padding:6px 16px;border:1px solid rgba(255,255,255,0.07);pointer-events:none;">Sample · Image 1.4× · Not the live site</div>
+
   <!-- Scroll progress bar -->
   <div id="scrollProgress"></div>
 
-  <!-- ── Global sticky header: logo + socials, persists across every section ── -->
-  <header class="site-header">
-    <a class="site-header-logo" href="#"><img src="assets/logo-light.png" alt="MAISARA"></a>
-    <div class="hero-socials">
-      <a class="icon-wrap" href="https://www.instagram.com/maisara.music/" target="_blank" rel="noopener" aria-label="Instagram">
-        <div class="halo"></div>
-        <svg viewBox="0 0 448 512"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
-      </a>
-      <a class="icon-wrap" href="https://www.youtube.com/@maisara-music" target="_blank" rel="noopener" aria-label="YouTube">
-        <div class="halo"></div>
-        <svg viewBox="0 0 576 512"><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/></svg>
-      </a>
-      <a class="icon-wrap" href="https://soundcloud.com/maisara-music-eg" target="_blank" rel="noopener" aria-label="SoundCloud">
-        <div class="halo"></div>
-        <svg viewBox="0 0 640 512"><path d="M111.4 256.3l5.8 65-5.8 68.3c-.3 2.5-2.2 4.4-4.4 4.4s-4.2-1.9-4.2-4.4l-5.6-68.3 5.6-65c0-2.2 1.9-4.2 4.2-4.2 2.2 0 4.1 2 4.4 4.2zm21.4-45.6c-2.8 0-4.7 2.2-5 5l-5 105.6 5 68.3c.3 2.8 2.2 5 5 5 2.5 0 4.7-2.2 4.7-5l5.8-68.3-5.8-105.6c0-2.8-2.2-5-4.7-5zm25.5-24.1c-3.1 0-5.3 2.2-5.6 5.3l-4.4 130 4.4 67.8c.3 3.1 2.5 5.3 5.6 5.3 2.8 0 5.3-2.2 5.3-5.3l5.3-67.8-5.3-130c0-3.1-2.5-5.3-5.3-5.3zM7.2 283.2c-1.4 0-2.2 1.1-2.5 2.5L0 321.3l4.7 35c.3 1.4 1.1 2.5 2.5 2.5s2.2-1.1 2.5-2.5l5.6-35-5.6-35.6c-.3-1.4-1.1-2.5-2.5-2.5zm23.6-21.9c-1.4 0-2.5 1.1-2.5 2.5l-6.4 57.5 6.4 56.1c0 1.7 1.1 2.8 2.5 2.8s2.5-1.1 2.8-2.5l7.2-56.4-7.2-57.5c-.3-1.4-1.4-2.5-2.8-2.5zm25.3-11.4c-1.7 0-3.1 1.4-3.3 3.3L47 321.3l5.8 65.8c.3 1.7 1.7 3.1 3.3 3.1 1.7 0 3.1-1.4 3.1-3.1l6.9-65.8-6.9-68.1c0-1.9-1.4-3.3-3.1-3.3zm25.3-2.2c-1.9 0-3.6 1.4-3.6 3.6l-5.8 70 5.8 67.8c0 2.2 1.7 3.6 3.6 3.6s3.6-1.4 3.9-3.6l6.4-67.8-6.4-70c-.3-2.2-2-3.6-3.9-3.6zm241.4-110.9c-1.1-.8-2.8-1.4-4.2-1.4-2.2 0-4.2.8-5.6 1.9-1.9 1.7-3.1 4.2-3.3 6.7v.8l-3.3 176.7 1.7 32.5 1.7 31.7c.3 4.7 4.2 8.6 8.9 8.6s8.6-3.9 8.6-8.6l3.9-64.2-3.9-177.5c-.4-3-2-5.8-4.5-7.2zm-26.7 15.3c-1.4-.8-2.8-1.4-4.4-1.4s-3.1.6-4.4 1.4c-2.2 1.4-3.6 3.9-3.6 6.7l-.3 1.7-2.8 160.8s0 .3 3.1 65.6v.3c0 1.7.6 3.3 1.7 4.7 1.7 1.9 3.9 3.1 6.4 3.1 2.2 0 4.2-1.1 5.6-2.5 1.7-1.4 2.5-3.3 2.5-5.6l.3-6.7 3.1-58.6-3.3-162.8c-.3-2.8-1.7-5.3-3.9-6.7zm-111.4 22.5c-3.1 0-5.8 2.8-5.8 6.1l-4.4 140.6 4.4 67.2c.3 3.3 2.8 5.8 5.8 5.8 3.3 0 5.8-2.5 6.1-5.8l5-67.2-5-140.6c-.2-3.3-2.7-6.1-6.1-6.1zm376.7 62.8c-10.8 0-21.1 2.2-30.6 6.1-6.4-70.8-65.8-126.4-138.3-126.4-17.8 0-35 3.3-50.3 9.4-6.1 2.2-7.8 4.4-7.8 9.2v249.7c0 5 3.9 8.6 8.6 9.2h218.3c43.3 0 78.6-35 78.6-78.3.1-43.6-35.2-78.9-78.5-78.9zm-296.7-60.3c-4.2 0-7.5 3.3-7.8 7.8l-3.3 136.7 3.3 65.6c.3 4.2 3.6 7.5 7.8 7.5 4.2 0 7.5-3.3 7.5-7.5l3.9-65.6-3.9-136.7c-.3-4.5-3.3-7.8-7.5-7.8zm-53.6-7.8c-3.3 0-6.4 3.1-6.4 6.7l-3.9 145.3 3.9 66.9c.3 3.6 3.1 6.4 6.4 6.4 3.6 0 6.4-2.8 6.7-6.4l4.4-66.9-4.4-145.3c-.3-3.6-3.1-6.7-6.7-6.7zm26.7 3.4c-3.9 0-6.9 3.1-6.9 6.9L227 321.3l3.9 66.4c.3 3.9 3.1 6.9 6.9 6.9s6.9-3.1 6.9-6.9l4.2-66.4-4.2-141.7c0-3.9-3-6.9-6.9-6.9z"/></svg>
-      </a>
-      <a class="icon-wrap" href="#" aria-label="Spotify">
-        <div class="halo"></div>
-        <svg viewBox="0 0 496 512"><path d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/></svg>
-      </a>
-      <a class="icon-wrap beatport" href="#" aria-label="Beatport">
-        <div class="halo"></div>
-        <svg viewBox="0 0 502 625"><path d="M166.617 0.115457C190.676-0.182883 214.802 0.209695 238.866 0.0544215C245.13 0.0138942 251.519-0.0139417 257.772 0.196996C257.043 13.7273 257.544 31.4319 257.546 45.2824L257.555 127.765C257.553 178.466 260.756 217.574 234.415 263.884C228.668 273.988 220.046 286.936 212.096 295.293L202.164 305.889C206.007 303.091 209.466 300.039 213.231 297.276C250.471 269.213 300.835 257.835 346.779 264.361C394.154 270.953 436.932 296.187 465.611 334.448C494.451 373.106 506.788 421.617 499.916 469.351C493.059 516.875 467.623 559.742 429.196 588.545C390.305 617.52 341.451 629.776 293.483 622.588C246.28 615.933 203.703 590.669 175.244 552.437C146.219 512.7 134.183 463.062 141.787 414.448C145.566 389.746 157.853 356.695 173.463 336.988C177.125 332.212 180.852 327.705 184.291 322.744C180.237 327.285 175.97 331.47 171.665 335.772C146.868 361.157 121.118 386.006 96.2038 411.299C85.7979 421.866 74.6512 432.451 64.513 443.199C58.0818 437.779 44.4858 423.452 38.1635 417.056C26.206 404.956 11.2874 391.045 0 378.672C5.62684 372.339 13.2913 365.054 19.3572 359.024C30.6656 347.661 42.1107 336.436 53.6901 325.347C72.6195 307.041 91.4809 287.648 110.238 269.092C123.958 254.845 139.434 242.482 150.781 226.142C170.767 197.364 166.483 160.922 166.476 127.701L166.465 46.8655C166.464 31.5403 166.221 15.3713 166.617 0.115457ZM322.574 541.475C376.586 540.41 419.56 495.869 418.676 441.866C417.797 387.862 373.387 344.746 319.37 345.445C265.089 346.148 221.71 390.806 222.597 445.069C223.484 499.331 268.299 542.549 322.574 541.475Z"/></svg>
-      </a>
-    </div>
-  </header>
+  <!-- ── Floating brand (top-left, fades in once you leave the hero) ── -->
+  <a class="floating-brand" id="floatingBrand" href="#">MAISARA</a>
 
   <!-- ── Side nav (right rail, chapter-marker style) ── -->
   <nav class="side-nav" id="sideNav">
@@ -1416,8 +1309,33 @@
   ══════════════════════════ -->
   <div class="hero">
 
-    <!-- Brand floats over the body, centered, anchored against .hero -->
-    <a class="hero-brand" href="#">MAISARA</a>
+    <!-- Top band: brand + socials only (no nav — handled by side rail) -->
+    <header class="hero-top">
+      <a class="hero-brand" href="#">MAISARA</a>
+
+      <div class="hero-socials">
+        <a class="icon-wrap" href="https://www.instagram.com/maisara.music/" target="_blank" rel="noopener" aria-label="Instagram">
+          <div class="halo"></div>
+          <svg viewBox="0 0 448 512"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
+        </a>
+        <a class="icon-wrap" href="https://www.youtube.com/@maisara-music" target="_blank" rel="noopener" aria-label="YouTube">
+          <div class="halo"></div>
+          <svg viewBox="0 0 576 512"><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/></svg>
+        </a>
+        <a class="icon-wrap" href="https://soundcloud.com/maisara-music-eg" target="_blank" rel="noopener" aria-label="SoundCloud">
+          <div class="halo"></div>
+          <svg viewBox="0 0 640 512"><path d="M111.4 256.3l5.8 65-5.8 68.3c-.3 2.5-2.2 4.4-4.4 4.4s-4.2-1.9-4.2-4.4l-5.6-68.3 5.6-65c0-2.2 1.9-4.2 4.2-4.2 2.2 0 4.1 2 4.4 4.2zm21.4-45.6c-2.8 0-4.7 2.2-5 5l-5 105.6 5 68.3c.3 2.8 2.2 5 5 5 2.5 0 4.7-2.2 4.7-5l5.8-68.3-5.8-105.6c0-2.8-2.2-5-4.7-5zm25.5-24.1c-3.1 0-5.3 2.2-5.6 5.3l-4.4 130 4.4 67.8c.3 3.1 2.5 5.3 5.6 5.3 2.8 0 5.3-2.2 5.3-5.3l5.3-67.8-5.3-130c0-3.1-2.5-5.3-5.3-5.3zM7.2 283.2c-1.4 0-2.2 1.1-2.5 2.5L0 321.3l4.7 35c.3 1.4 1.1 2.5 2.5 2.5s2.2-1.1 2.5-2.5l5.6-35-5.6-35.6c-.3-1.4-1.1-2.5-2.5-2.5zm23.6-21.9c-1.4 0-2.5 1.1-2.5 2.5l-6.4 57.5 6.4 56.1c0 1.7 1.1 2.8 2.5 2.8s2.5-1.1 2.8-2.5l7.2-56.4-7.2-57.5c-.3-1.4-1.4-2.5-2.8-2.5zm25.3-11.4c-1.7 0-3.1 1.4-3.3 3.3L47 321.3l5.8 65.8c.3 1.7 1.7 3.1 3.3 3.1 1.7 0 3.1-1.4 3.1-3.1l6.9-65.8-6.9-68.1c0-1.9-1.4-3.3-3.1-3.3zm25.3-2.2c-1.9 0-3.6 1.4-3.6 3.6l-5.8 70 5.8 67.8c0 2.2 1.7 3.6 3.6 3.6s3.6-1.4 3.9-3.6l6.4-67.8-6.4-70c-.3-2.2-2-3.6-3.9-3.6zm241.4-110.9c-1.1-.8-2.8-1.4-4.2-1.4-2.2 0-4.2.8-5.6 1.9-1.9 1.7-3.1 4.2-3.3 6.7v.8l-3.3 176.7 1.7 32.5 1.7 31.7c.3 4.7 4.2 8.6 8.9 8.6s8.6-3.9 8.6-8.6l3.9-64.2-3.9-177.5c-.4-3-2-5.8-4.5-7.2zm-26.7 15.3c-1.4-.8-2.8-1.4-4.4-1.4s-3.1.6-4.4 1.4c-2.2 1.4-3.6 3.9-3.6 6.7l-.3 1.7-2.8 160.8s0 .3 3.1 65.6v.3c0 1.7.6 3.3 1.7 4.7 1.7 1.9 3.9 3.1 6.4 3.1 2.2 0 4.2-1.1 5.6-2.5 1.7-1.4 2.5-3.3 2.5-5.6l.3-6.7 3.1-58.6-3.3-162.8c-.3-2.8-1.7-5.3-3.9-6.7zm-111.4 22.5c-3.1 0-5.8 2.8-5.8 6.1l-4.4 140.6 4.4 67.2c.3 3.3 2.8 5.8 5.8 5.8 3.3 0 5.8-2.5 6.1-5.8l5-67.2-5-140.6c-.2-3.3-2.7-6.1-6.1-6.1zm376.7 62.8c-10.8 0-21.1 2.2-30.6 6.1-6.4-70.8-65.8-126.4-138.3-126.4-17.8 0-35 3.3-50.3 9.4-6.1 2.2-7.8 4.4-7.8 9.2v249.7c0 5 3.9 8.6 8.6 9.2h218.3c43.3 0 78.6-35 78.6-78.3.1-43.6-35.2-78.9-78.5-78.9zm-296.7-60.3c-4.2 0-7.5 3.3-7.8 7.8l-3.3 136.7 3.3 65.6c.3 4.2 3.6 7.5 7.8 7.5 4.2 0 7.5-3.3 7.5-7.5l3.9-65.6-3.9-136.7c-.3-4.5-3.3-7.8-7.5-7.8zm-53.6-7.8c-3.3 0-6.4 3.1-6.4 6.7l-3.9 145.3 3.9 66.9c.3 3.6 3.1 6.4 6.4 6.4 3.6 0 6.4-2.8 6.7-6.4l4.4-66.9-4.4-145.3c-.3-3.6-3.1-6.7-6.7-6.7zm26.7 3.4c-3.9 0-6.9 3.1-6.9 6.9L227 321.3l3.9 66.4c.3 3.9 3.1 6.9 6.9 6.9s6.9-3.1 6.9-6.9l4.2-66.4-4.2-141.7c0-3.9-3-6.9-6.9-6.9z"/></svg>
+        </a>
+        <a class="icon-wrap" href="#" aria-label="Spotify">
+          <div class="halo"></div>
+          <svg viewBox="0 0 496 512"><path d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/></svg>
+        </a>
+        <a class="icon-wrap beatport" href="#" aria-label="Beatport">
+          <div class="halo"></div>
+          <svg viewBox="0 0 502 625"><path d="M166.617 0.115457C190.676-0.182883 214.802 0.209695 238.866 0.0544215C245.13 0.0138942 251.519-0.0139417 257.772 0.196996C257.043 13.7273 257.544 31.4319 257.546 45.2824L257.555 127.765C257.553 178.466 260.756 217.574 234.415 263.884C228.668 273.988 220.046 286.936 212.096 295.293L202.164 305.889C206.007 303.091 209.466 300.039 213.231 297.276C250.471 269.213 300.835 257.835 346.779 264.361C394.154 270.953 436.932 296.187 465.611 334.448C494.451 373.106 506.788 421.617 499.916 469.351C493.059 516.875 467.623 559.742 429.196 588.545C390.305 617.52 341.451 629.776 293.483 622.588C246.28 615.933 203.703 590.669 175.244 552.437C146.219 512.7 134.183 463.062 141.787 414.448C145.566 389.746 157.853 356.695 173.463 336.988C177.125 332.212 180.852 327.705 184.291 322.744C180.237 327.285 175.97 331.47 171.665 335.772C146.868 361.157 121.118 386.006 96.2038 411.299C85.7979 421.866 74.6512 432.451 64.513 443.199C58.0818 437.779 44.4858 423.452 38.1635 417.056C26.206 404.956 11.2874 391.045 0 378.672C5.62684 372.339 13.2913 365.054 19.3572 359.024C30.6656 347.661 42.1107 336.436 53.6901 325.347C72.6195 307.041 91.4809 287.648 110.238 269.092C123.958 254.845 139.434 242.482 150.781 226.142C170.767 197.364 166.483 160.922 166.476 127.701L166.465 46.8655C166.464 31.5403 166.221 15.3713 166.617 0.115457ZM322.574 541.475C376.586 540.41 419.56 495.869 418.676 441.866C417.797 387.862 373.387 344.746 319.37 345.445C265.089 346.148 221.71 390.806 222.597 445.069C223.484 499.331 268.299 542.549 322.574 541.475Z"/></svg>
+        </a>
+      </div>
+    </header>
 
     <!-- Body: vinyl + info on left, tabs + tracks on right -->
     <div class="hero-body">
@@ -1457,13 +1375,62 @@
           <button class="tab" role="tab" id="tab-yugen"  aria-controls="panel-yugen"  aria-selected="false">Yūgen</button>
         </div>
 
-        <!-- Track rows are rendered from playlists.json on page load -->
         <div class="tab-panel active" id="panel-warmup">
-          <div class="track-list" id="trackList-warmup"></div>
+          <div class="track-list">
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up I" data-sub="The Opening Hours">
+              <span class="track-num">01</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up I</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up II" data-sub="The Opening Hours">
+              <span class="track-num">02</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up II</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled Warm-up III" data-sub="The Opening Hours">
+              <span class="track-num">03</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled Warm-up III</span>
+                <span class="track-sub">The Opening Hours</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+          </div>
         </div>
 
         <div class="tab-panel" id="panel-yugen">
-          <div class="track-list" id="trackList-yugen"></div>
+          <div class="track-list">
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled I" data-sub="Yūgen Series">
+              <span class="track-num">01</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled I</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled II" data-sub="Yūgen Series">
+              <span class="track-num">02</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled II</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+            <div class="track" data-src="assets/audio/intro.wav" data-title="Untitled III" data-sub="Yūgen Series">
+              <span class="track-num">03</span>
+              <div class="track-title-group">
+                <span class="track-title">Untitled III</span>
+                <span class="track-sub">Yūgen Series</span>
+              </div>
+              <button class="track-listen" aria-label="Play"></button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1635,19 +1602,8 @@
     ════════════════════════════════ */
     const navKeys = new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ','Space','Spacebar']);
 
-    // Scroll allowed inside the active tab panel (track list overflow);
-    // everywhere else the page is locked to CTA-driven scrollIntoView.
-    function insideScrollable(target) {
-      return target && target.closest && target.closest('.tab-panel.active');
-    }
-    window.addEventListener('wheel', e => {
-      if (insideScrollable(e.target)) return;
-      e.preventDefault();
-    }, { passive: false });
-    window.addEventListener('touchmove', e => {
-      if (insideScrollable(e.target)) return;
-      e.preventDefault();
-    }, { passive: false });
+    window.addEventListener('wheel',     e => e.preventDefault(), { passive: false });
+    window.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
     window.addEventListener('keydown',   e => {
       // Don't block keys inside form inputs (none on site today, but defensive)
       const t = e.target;
@@ -1730,8 +1686,6 @@
 
     let audio = null;
     let loadedTrack = null;
-    let userPaused = false;          // distinguishes intentional pause from network/browser stalls
-    let autoResumeAttempts = 0;      // guard against infinite retry loops
 
     function fmt(s) {
       if (!isFinite(s)) return '0:00';
@@ -1754,66 +1708,21 @@
 
       audio = new Audio(trackEl.dataset.src);
       audio.addEventListener('loadedmetadata', () => { infoDur.textContent = fmt(audio.duration); });
-
-      // 'playing' = actually progressing audio (not just .play() called)
-      audio.addEventListener('playing', () => {
+      audio.addEventListener('play',  () => {
         vinyl.classList.add('playing');
-        vinyl.classList.remove('loading');
         trackEl.classList.add('playing');
-        autoResumeAttempts = 0;
       });
-
-      // Buffer ran dry mid-playback — show pulse, browser will auto-resume.
-      audio.addEventListener('waiting', () => {
-        vinyl.classList.add('loading');
-      });
-
-      // Network stall — treat as transient loading state.
-      audio.addEventListener('stalled', () => {
-        vinyl.classList.add('loading');
-      });
-
-      // Pause handler distinguishes intentional vs browser-forced pause.
       audio.addEventListener('pause', () => {
-        if (audio.ended) return;
-        if (userPaused) {
-          // The user actually pressed pause
+        if (!audio.ended) {
           vinyl.classList.remove('playing');
-          vinyl.classList.remove('loading');
           trackEl.classList.remove('playing');
-          userPaused = false;
-        } else if (autoResumeAttempts < 3) {
-          // Browser/network-induced pause — try to recover
-          autoResumeAttempts++;
-          vinyl.classList.add('loading');
-          audio.play().catch(err => {
-            console.warn('Auto-resume failed:', err.message);
-            vinyl.classList.remove('playing');
-            vinyl.classList.remove('loading');
-            trackEl.classList.remove('playing');
-          });
-        } else {
-          // Give up after 3 attempts — user can click to retry
-          vinyl.classList.remove('playing');
-          vinyl.classList.remove('loading');
-          trackEl.classList.remove('playing');
-          console.warn('Auto-resume gave up after 3 attempts');
         }
       });
-
       audio.addEventListener('ended', () => {
         vinyl.classList.remove('playing');
-        vinyl.classList.remove('loading');
         trackEl.classList.remove('playing');
         infoFill.style.width = '0%';
         infoCurrent.textContent = '0:00';
-        autoResumeAttempts = 0;
-      });
-      audio.addEventListener('error', () => {
-        vinyl.classList.remove('loading');
-        vinyl.classList.remove('playing');
-        trackEl.classList.remove('playing');
-        console.warn('Audio error:', trackEl.dataset.src);
       });
       audio.addEventListener('timeupdate', () => {
         if (!audio.duration) return;
@@ -1822,90 +1731,26 @@
       });
 
       vinyl.classList.add('armed');
-      vinyl.classList.add('loading');
-      audio.play().catch(err => {
-        vinyl.classList.remove('loading');
-        console.warn('Audio failed:', trackEl.dataset.src, err.message);
+      audio.play().catch(err => console.warn('Audio failed:', trackEl.dataset.src, err.message));
+    }
+
+    document.querySelectorAll('.track').forEach(tr => {
+      tr.addEventListener('click', () => {
+        // Already-loaded track → toggle pause/play instead of reloading
+        if (loadedTrack === tr && audio) {
+          if (audio.paused) audio.play();
+          else              audio.pause();
+          return;
+        }
+        loadTrack(tr);
       });
-    }
-
-    /* ── Playlist data: fetched from playlists.json, rendered into tab panels ── */
-    function renderTrackRow(track, index) {
-      const row = document.createElement('div');
-      row.className = 'track';
-      row.dataset.src   = track.url;
-      row.dataset.title = track.title;
-      row.dataset.sub   = track.description;
-      row.innerHTML = `
-        <span class="track-num">${String(index + 1).padStart(2, '0')}</span>
-        <div class="track-title-group">
-          <span class="track-title"></span>
-          <span class="track-sub"></span>
-        </div>
-        <button class="track-listen" aria-label="Play"></button>
-      `;
-      row.querySelector('.track-title').textContent = track.title;
-      row.querySelector('.track-sub').textContent   = track.description;
-      return row;
-    }
-
-    function renderPlaylist(key, playlist) {
-      const container = document.getElementById('trackList-' + key);
-      if (!container) return;
-      container.innerHTML = '';
-      if (!playlist.tracks || playlist.tracks.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'track-empty';
-        empty.textContent = 'Coming soon';
-        container.appendChild(empty);
-        return;
-      }
-      playlist.tracks.forEach((t, i) => container.appendChild(renderTrackRow(t, i)));
-    }
-
-    function wireTrackHandlers() {
-      document.querySelectorAll('.track').forEach(tr => {
-        tr.addEventListener('click', () => {
-          if (loadedTrack === tr && audio) {
-            if (audio.paused) {
-              audio.play();
-            } else {
-              userPaused = true;
-              audio.pause();
-            }
-            return;
-          }
-          loadTrack(tr);
-        });
-      });
-    }
-
-    (async function loadPlaylists() {
-      try {
-        const res = await fetch('playlists.json');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        renderPlaylist('warmup', data.warmup);
-        renderPlaylist('yugen',  data.yugen);
-        wireTrackHandlers();
-      } catch (err) {
-        console.warn('Could not load playlists.json:', err.message);
-        ['warmup', 'yugen'].forEach(k => {
-          const c = document.getElementById('trackList-' + k);
-          if (c) c.innerHTML = '<div class="track-empty">Playlist unavailable</div>';
-        });
-      }
-    })();
+    });
 
     // Whole vinyl toggles play/pause (only when armed = a track is loaded)
     vinyl.addEventListener('click', () => {
       if (!audio) return;
-      if (audio.paused) {
-        audio.play();
-      } else {
-        userPaused = true;
-        audio.pause();
-      }
+      if (audio.paused) audio.play();
+      else              audio.pause();
     });
 
     /* ════════════════════════════════
@@ -1935,11 +1780,22 @@
     popover.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
 
     /* ════════════════════════════════
+       FLOATING BRAND VISIBILITY (shown only when off-hero)
+       Side nav stays always-visible (no fade gate).
+    ════════════════════════════════ */
+    const floatingBrand = document.getElementById('floatingBrand');
+    const heroEl        = document.querySelector('.hero');
+
+    const heroObserver = new IntersectionObserver(([entry]) => {
+      floatingBrand.classList.toggle('visible', !entry.isIntersecting);
+    }, { threshold: 0.05 });
+    heroObserver.observe(heroEl);
+
+    /* ════════════════════════════════
        ACTIVE SECTION HIGHLIGHTING (side-nav)
        Hero IS listen → its observer maps to the 'listen' button.
     ════════════════════════════════ */
     const sideNavBtns = document.querySelectorAll('.side-nav button');
-    const heroEl = document.querySelector('.hero');
 
     // Map: observed element → side-nav data-section value
     const sectionTargets = [

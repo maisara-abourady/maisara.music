@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<!--
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ SAMPLE FILE — NOT THE LIVE SITE                                  │
+  │                                                                  │
+  │ Shows the proposed "side-nav-when-not-on-hero" treatment.        │
+  │ Renders the Listen section as it would look with a vertical      │
+  │ right-side rail replacing the current sticky top bar.            │
+  │                                                                  │
+  │ Brand floats top-left as a fixed anchor (clickable → back to     │
+  │ hero on the real site).                                          │
+  │                                                                  │
+  │ Active item: accent text + 1px vertical accent bar on its left   │
+  │ edge (the rotated cousin of the hero-nav's underline-on-hover).  │
+  └──────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAISARA — Side Nav Direction Sample</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: 'Maisara Signature';
+      src: url('assets/fonts/maisara.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:           #0a0e1a;
+      --bg-alt:       #0c1120;
+      --accent:       #74BFFF;
+      --accent-dim:   #77b0d1;
+      --text:         #ffffff;
+      --text-muted:   rgba(255,255,255,0.5);
+      --text-subtle:  rgba(255,255,255,0.22);
+      --border:       rgba(255,255,255,0.07);
+    }
+
+    html, body {
+      width: 100vw;
+      background: var(--bg-alt);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.028;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ════════════════════════════════
+       FLOATING BRAND (always top-left)
+    ════════════════════════════════ */
+    .floating-brand {
+      position: fixed;
+      top: 32px;
+      left: 80px;
+      z-index: 1100;
+      font-family: 'Maisara Signature', 'Cormorant Garamond', serif;
+      font-size: 1.45rem;
+      font-weight: 400;
+      letter-spacing: 0.23em;
+      color: var(--text);
+      text-decoration: none;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    /* ════════════════════════════════
+       SIDE NAV (right edge, vertically centered, chapter-marker style)
+       Each item: tiny roman numeral + italic serif label.
+       Active item: accent color + horizontal hairline extending leftward
+       (drawing the eye from section content into the rail).
+    ════════════════════════════════ */
+    .side-nav {
+      position: fixed;
+      top: 50%;
+      right: 60px;
+      transform: translateY(-50%);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 38px;
+    }
+
+    .side-nav button {
+      display: inline-grid;
+      grid-template-columns: auto 24px auto;
+      align-items: baseline;
+      gap: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      transition: color 320ms;
+    }
+
+    .side-nav .numeral {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      justify-self: end;
+      transition: color 320ms;
+    }
+
+    .side-nav .label {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.3rem;
+      letter-spacing: 0.005em;
+      color: var(--text-muted);
+      grid-column: 3;
+      transition: color 320ms;
+    }
+
+    /* Hairline that extends leftward from the active item into the section content */
+    .side-nav button::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      margin-right: 16px;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 380ms ease;
+    }
+
+    .side-nav button:hover .label    { color: var(--text); }
+    .side-nav button:hover .numeral  { color: var(--accent-dim); }
+
+    .side-nav button.active .label   { color: var(--accent); font-style: italic; }
+    .side-nav button.active .numeral { color: var(--accent); }
+    .side-nav button.active::before  { width: 56px; }
+
+    /* ════════════════════════════════
+       LISTEN SECTION (re-using live-site styles, slightly trimmed)
+    ════════════════════════════════ */
+    .section {
+      width: 100%;
+      min-height: 100vh;
+      padding: 110px 15vw 110px;
+      position: relative;
+    }
+
+    .listen-eyebrow {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 38px;
+    }
+
+    .listen-eyebrow::before {
+      content: '';
+      width: 28px; height: 1px;
+      background: var(--accent-dim);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 56px;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 22px;
+      margin-bottom: 56px;
+    }
+
+    .tab {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-subtle);
+      background: none;
+      border: none;
+      padding: 0 0 8px;
+      cursor: pointer;
+      position: relative;
+      transition: color 320ms;
+    }
+
+    .tab::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      bottom: -23px;
+      height: 1px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 380ms ease;
+    }
+
+    .tab[aria-selected="true"] { color: var(--text); }
+    .tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+    .track {
+      display: grid;
+      grid-template-columns: 48px 1fr 110px 80px 130px;
+      align-items: center;
+      column-gap: 24px;
+      padding: 22px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 300ms;
+    }
+
+    .track:first-child { border-top: 1px solid var(--border); }
+    .track:hover { background: rgba(116,191,255,0.025); }
+
+    .track-num {
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: var(--text-subtle);
+    }
+
+    .track-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .track-sub {
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+      display: block;
+      margin-top: 6px;
+    }
+
+    .track-date,
+    .track-duration {
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .track-play {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 12px 22px;
+      cursor: pointer;
+      transition: border-color 250ms, color 250ms, background 250ms;
+    }
+
+    .track-play:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(116,191,255,0.05);
+    }
+
+    .track-play .glyph {
+      display: inline-block;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 5px 0 5px 8px;
+      border-color: transparent transparent transparent currentColor;
+    }
+
+    /* ════════════════════════════════
+       SAMPLE MARKER
+    ════════════════════════════════ */
+    .sample-marker {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      background: rgba(10,14,26,0.7);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sample-marker">Sample · Side-nav direction · Not the live site</div>
+
+  <a class="floating-brand" href="#">MAISARA</a>
+
+  <nav class="side-nav">
+    <button class="active">
+      <span class="numeral">I</span>
+      <span class="label">Listen</span>
+    </button>
+    <button>
+      <span class="numeral">II</span>
+      <span class="label">Philosophy</span>
+    </button>
+    <button>
+      <span class="numeral">III</span>
+      <span class="label">Sound</span>
+    </button>
+    <button>
+      <span class="numeral">IV</span>
+      <span class="label">Discography</span>
+    </button>
+    <button>
+      <span class="numeral">V</span>
+      <span class="label">Bookings</span>
+    </button>
+  </nav>
+
+  <section class="section" id="listen">
+    <div class="listen-eyebrow">Listen</div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" aria-selected="true">Warm-up Sessions</button>
+      <button class="tab" aria-selected="false">Yūgen</button>
+    </div>
+
+    <div class="track-list">
+      <div class="track">
+        <span class="track-num">01</span>
+        <div>
+          <span class="track-title">Untitled Warm-up I</span>
+          <span class="track-sub">The Opening Hours</span>
+        </div>
+        <span class="track-date">— · —</span>
+        <span class="track-duration">— · —</span>
+        <button class="track-play">
+          <span class="glyph"></span>
+          <span>Listen</span>
+        </button>
+      </div>
+
+      <div class="track">
+        <span class="track-num">02</span>
+        <div>
+          <span class="track-title">Untitled Warm-up II</span>
+          <span class="track-sub">The Opening Hours</span>
+        </div>
+        <span class="track-date">— · —</span>
+        <span class="track-duration">— · —</span>
+        <button class="track-play">
+          <span class="glyph"></span>
+          <span>Listen</span>
+        </button>
+      </div>
+
+      <div class="track">
+        <span class="track-num">03</span>
+        <div>
+          <span class="track-title">Untitled Warm-up III</span>
+          <span class="track-sub">The Opening Hours</span>
+        </div>
+        <span class="track-date">— · —</span>
+        <span class="track-duration">— · —</span>
+        <button class="track-play">
+          <span class="glyph"></span>
+          <span>Listen</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

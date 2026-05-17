@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!--
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ SAMPLE FILE — NOT THE LIVE SITE                                  │
+  │                                                                  │
+  │ Renders the hero in the teal / Blade Runner 2049 direction       │
+  │ from the brand architecture work — so it can be visually         │
+  │ compared against the live cool-blue + Cormorant aesthetic.       │
+  │                                                                  │
+  │ Palette and type are my interpretation of the brand brief:       │
+  │   - angular teal on near-black                                   │
+  │   - amber as warmth-counterpoint (BR2049 secondary)              │
+  │   - Neue Machina substituted with Space Grotesk (free,           │
+  │     similar geometric angularity); Inter for body                │
+  │   - subtraction over addition                                    │
+  │                                                                  │
+  │ This is a directional mock, not pixel-faithful to the locked     │
+  │ brand identity (no half-M monogram, no crossbar-less A's —       │
+  │ those need the real custom logotype).                            │
+  └──────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAISARA — Teal Direction Sample</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* Teal direction palette — near-black with teal-warm undertone */
+      --bg:           #08100f;
+      --bg-alt:       #0a1413;
+      --bg-deep:      #050a09;
+
+      /* Primary teal accent — Blade Runner 2049 holographic */
+      --teal:         #4ac7b8;
+      --teal-dim:     #2f8b82;
+      --teal-glow:    rgba(74,199,184,0.10);
+
+      /* Secondary amber accent — BR2049 dust/warmth */
+      --amber:        #c98b3a;
+      --amber-dim:    #8a5d28;
+
+      --text:         #e8ebec;
+      --text-muted:   rgba(232,235,236,0.55);
+      --text-subtle:  rgba(232,235,236,0.25);
+      --border:       rgba(232,235,236,0.08);
+    }
+
+    html, body {
+      width: 100vw;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Grain — same logic as live site but warmer-tinged */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 9998;
+      mix-blend-mode: overlay;
+    }
+
+    /* ════════════════════════════════
+       HERO
+    ════════════════════════════════ */
+    .hero {
+      width: 100vw;
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 84% 14%, var(--teal-glow), transparent 46%),
+        radial-gradient(circle at 92% 88%, rgba(201,139,58,0.08), transparent 40%),
+        linear-gradient(to right, transparent 0%, transparent 28%, rgba(8,16,15,0.78) 52%, rgba(8,16,15,0.97) 78%),
+        url('assets/hero-bg.png') center center / cover no-repeat;
+    }
+
+    /* ── Top header ── */
+    .hero-header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 36px 80px 0;
+      gap: 56px;
+    }
+
+    .hero-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      letter-spacing: 0.32em;
+      color: var(--text);
+      text-decoration: none;
+      line-height: 1;
+      padding-bottom: 2px;
+      /* Slight angular weighting on first stroke (suggests asymmetric monogram) */
+      text-indent: 0;
+    }
+
+    .hero-brand::first-letter {
+      /* Subtly heavier first letter — directional toward the half-M monogram idea */
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-nav {
+      display: flex;
+      gap: 44px;
+      margin-bottom: 5px;
+    }
+
+    .hero-nav a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding-bottom: 4px;
+      position: relative;
+      transition: color 250ms;
+    }
+
+    .hero-nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1px;
+      background: var(--teal);
+      transition: width 280ms ease;
+    }
+
+    .hero-nav a:hover { color: var(--text); }
+    .hero-nav a:hover::after { width: 100%; }
+
+    .hero-socials {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .hero-socials .icon {
+      width: 14px; height: 14px;
+      border: 1px solid var(--text-muted);
+      display: inline-block;
+      transition: border-color 200ms, background 200ms;
+      cursor: pointer;
+    }
+
+    .hero-socials .icon:hover {
+      border-color: var(--teal);
+      background: var(--teal-glow);
+    }
+
+    /* ── Hero body: 2-CTA stack right-aligned ── */
+    .hero-body {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 60px 80px 80px;
+    }
+
+    .hero-cta-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 72px;
+      max-width: 460px;
+    }
+
+    .hero-cta {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      position: relative;
+    }
+
+    .hero-cta-eyebrow {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .hero-cta-eyebrow::before {
+      content: '';
+      width: 28px; height: 1px;
+      background: var(--amber);
+      flex-shrink: 0;
+    }
+
+    .hero-cta--listening .hero-cta-eyebrow {
+      color: var(--teal-dim);
+    }
+    .hero-cta--listening .hero-cta-eyebrow::before {
+      background: var(--teal-dim);
+    }
+
+    .hero-cta-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: 0;
+      margin-bottom: 18px;
+      transition: color 350ms;
+      text-transform: uppercase;
+    }
+
+    .hero-cta--listening .hero-cta-title { font-size: clamp(1.8rem, 2.6vw, 2.4rem); font-weight: 400; letter-spacing: 0.04em; }
+    .hero-cta--warmup    .hero-cta-title { font-size: clamp(2.4rem, 3.6vw, 3.4rem); font-weight: 700; letter-spacing: -0.01em; }
+
+    .hero-cta-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.86rem;
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--text-muted);
+      margin-bottom: 26px;
+      max-width: 380px;
+    }
+
+    .hero-cta-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text);
+      transition: color 280ms;
+    }
+
+    .hero-cta-link::before {
+      content: '';
+      display: block;
+      width: 36px; height: 1px;
+      background: rgba(232,235,236,0.4);
+      transition: width 380ms ease, background 280ms;
+    }
+
+    .hero-cta--warmup .hero-cta-link::before {
+      width: 48px;
+      background: var(--amber-dim);
+    }
+    .hero-cta--listening .hero-cta-link::before {
+      background: var(--teal-dim);
+    }
+
+    .hero-cta:hover .hero-cta-title { color: var(--teal); }
+    .hero-cta--warmup:hover .hero-cta-title { color: var(--amber); }
+    .hero-cta:hover .hero-cta-link  { color: var(--teal); }
+    .hero-cta--warmup:hover .hero-cta-link { color: var(--amber); }
+    .hero-cta:hover .hero-cta-link::before {
+      width: 64px;
+      background: var(--teal);
+    }
+    .hero-cta--warmup:hover .hero-cta-link::before {
+      width: 76px;
+      background: var(--amber);
+    }
+
+    /* ── Tagline ── */
+    .hero-tagline {
+      position: absolute;
+      bottom: 36px;
+      left: 80px;
+      z-index: 10;
+      max-width: 380px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+      color: rgba(232,235,236,0.55);
+    }
+
+    .hero-tagline::before {
+      content: '';
+      display: block;
+      width: 28px; height: 1px;
+      background: var(--teal-dim);
+      margin-bottom: 14px;
+    }
+
+    /* ── Comparison marker (sample-only, not real UI) ── */
+    .sample-marker {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--amber);
+      background: rgba(8,16,15,0.7);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border: 1px solid rgba(201,139,58,0.3);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sample-marker">Sample · Teal direction · Not the live site</div>
+
+  <div class="hero">
+
+    <!-- Top header -->
+    <header class="hero-header">
+      <a class="hero-brand" href="#">MAISARA</a>
+
+      <nav class="hero-nav">
+        <a href="#">Philosophy</a>
+        <a href="#">Sound</a>
+        <a href="#">Discography</a>
+        <a href="#">Bookings</a>
+      </nav>
+
+      <div class="hero-socials">
+        <span class="icon" aria-label="Instagram"></span>
+        <span class="icon" aria-label="SoundCloud"></span>
+        <span class="icon" aria-label="YouTube"></span>
+        <span class="icon" aria-label="Spotify"></span>
+        <span class="icon" aria-label="Beatport"></span>
+      </div>
+    </header>
+
+    <!-- Two CTAs -->
+    <div class="hero-body">
+      <div class="hero-cta-stack">
+
+        <a class="hero-cta hero-cta--warmup" href="#">
+          <div class="hero-cta-eyebrow">I · The opening hours</div>
+          <h2 class="hero-cta-title">Warm-up Sessions</h2>
+          <p class="hero-cta-body">Long-form sets that shape a room before the headliner. The heart of the practice.</p>
+          <span class="hero-cta-link">Listen <span aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="hero-cta hero-cta--listening" href="#">
+          <div class="hero-cta-eyebrow">II · Listening Sessions</div>
+          <h2 class="hero-cta-title">Yūgen</h2>
+          <p class="hero-cta-body">Listening in reverence.. a broadcast of my heart.</p>
+          <span class="hero-cta-link">Listen <span aria-hidden="true">→</span></span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <p class="hero-tagline">For hearts that already know, without knowing.</p>
+
+  </div>
+
+</body>
+</html>
