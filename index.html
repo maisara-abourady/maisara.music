@@ -549,6 +549,16 @@
     .track:hover { background: rgba(116,191,255,0.025); }
     .track.loaded { background: rgba(116,191,255,0.04); }
 
+    /* Wrapper holds the row counter — either the "01/02/…" label or
+       a tiny square visualizer when the track is actively playing. */
+    .track-counter {
+      width: 38px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
     .track-num {
       font-size: 0.55rem;
       font-weight: 600;
@@ -559,6 +569,15 @@
 
     .track:hover .track-num,
     .track.loaded .track-num { color: var(--accent); }
+
+    .track-viz {
+      width: 28px;
+      height: 28px;
+      display: none;
+    }
+
+    .track.playing .track-num { display: none; }
+    .track.playing .track-viz { display: block; }
 
     .track-title-group { min-width: 0; }
 
@@ -1775,47 +1794,68 @@
       }
     }
 
-    function drawVizBars() {
-      const w = vizCanvas.width;
-      const h = vizCanvas.height;
-      vizCtx.clearRect(0, 0, w, h);
-
-      if (!vizPlaying || !analyser) {
-        // Idle: subtle baseline so the slot reads as intentional, not empty.
-        vizCtx.strokeStyle = 'rgba(255,255,255,0.18)';
-        vizCtx.lineWidth = 1;
-        vizCtx.beginPath();
-        vizCtx.moveTo(0, h - 0.5);
-        vizCtx.lineTo(w, h - 0.5);
-        vizCtx.stroke();
-        return;
-      }
-
-      analyser.getByteFrequencyData(freqData);
+    // Render `barCount` pill bars from freqData onto the given context.
+    // Bar width = a constant fraction of each bar's slot, so visual proportions
+    // stay consistent regardless of bar count (3 bars look as airy as 12).
+    function drawAnalyserBars(ctx, w, h, barCount) {
       const usable      = Math.floor(freqData.length * 0.66);
-      const barCount    = 12;
       const binsPerBar  = Math.max(1, Math.floor(usable / barCount));
       const startOffset = binsPerBar; // skip the always-saturated sub-bass band
-      const gap         = w * 0.055;
-      const barW        = (w - gap * (barCount - 1)) / barCount;
 
-      vizCtx.fillStyle = 'rgba(255,255,255,0.62)';
+      const BAR_RATIO = 0.4;           // bar width as a fraction of its slot
+      const slot      = w / barCount;
+      const barW      = slot * BAR_RATIO;
+      const gap       = slot - barW;
+      const offsetX   = gap / 2;       // symmetric leading + trailing breathing room
+
+      ctx.fillStyle = 'rgba(255,255,255,0.62)';
       for (let i = 0; i < barCount; i++) {
         let sum = 0;
         for (let j = 0; j < binsPerBar; j++) sum += freqData[startOffset + i * binsPerBar + j];
         const avg = sum / binsPerBar;
         const barH = Math.max(barW, (avg / 255) * h);
-        const x = i * (barW + gap);
+        const x = offsetX + i * slot;
         const y = h - barH;
         const r = barW / 2;
-        vizCtx.beginPath();
-        vizCtx.roundRect(x, y, barW, barH, r);
-        vizCtx.fill();
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, r);
+        ctx.fill();
       }
     }
 
+    function drawIdleBaseline(ctx, w, h) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h - 0.5);
+      ctx.lineTo(w, h - 0.5);
+      ctx.stroke();
+    }
+
+    function drawHeaderViz() {
+      const w = vizCanvas.width;
+      const h = vizCanvas.height;
+      vizCtx.clearRect(0, 0, w, h);
+      if (!vizPlaying || !analyser) return drawIdleBaseline(vizCtx, w, h);
+      drawAnalyserBars(vizCtx, w, h, 12);
+    }
+
+    function drawPlayingTrackViz() {
+      if (!vizPlaying || !analyser) return;
+      const row = document.querySelector('.track.playing');
+      if (!row) return;
+      const c = row.querySelector('.track-viz');
+      if (!c) return;
+      const ctx2d = c.getContext('2d');
+      ctx2d.clearRect(0, 0, c.width, c.height);
+      drawAnalyserBars(ctx2d, c.width, c.height, 3); // fewer bars in the small square
+    }
+
     function vizLoop() {
-      drawVizBars();
+      // One frequency sample per frame, used by both canvases.
+      if (vizPlaying && analyser) analyser.getByteFrequencyData(freqData);
+      drawHeaderViz();
+      drawPlayingTrackViz();
       requestAnimationFrame(vizLoop);
     }
     vizLoop();
@@ -1936,7 +1976,10 @@
       row.dataset.title = track.title;
       row.dataset.sub   = track.description;
       row.innerHTML = `
-        <span class="track-num">${String(index + 1).padStart(2, '0')}</span>
+        <div class="track-counter">
+          <span class="track-num">${String(index + 1).padStart(2, '0')}</span>
+          <canvas class="track-viz" width="56" height="56" aria-hidden="true"></canvas>
+        </div>
         <div class="track-title-group">
           <span class="track-title"></span>
           <span class="track-sub"></span>
