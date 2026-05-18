@@ -113,6 +113,12 @@
 
     .site-header > * { pointer-events: auto; }
 
+    .site-header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
     .site-header-logo {
       display: inline-flex;
       align-items: center;
@@ -122,6 +128,14 @@
     .site-header-logo img {
       height: 44px;
       width: auto;
+      display: block;
+    }
+
+    /* Small audio visualizer to the right of the logo. Internal canvas
+       resolution is 2× the CSS size for crisp rendering on retina. */
+    .header-viz {
+      width: 120px;
+      height: 44px;
       display: block;
     }
 
@@ -1289,6 +1303,7 @@
 
       .site-header { padding: 16px 24px; }
       .site-header-logo img { height: 32px; }
+      .header-viz { width: 80px; height: 32px; }
       .hero-brand { font-size: 1.2rem; }
       .hero-nav { display: none; }
       .hero-socials { display: none; }
@@ -1355,7 +1370,10 @@
 
   <!-- ── Global sticky header: logo + socials, persists across every section ── -->
   <header class="site-header">
-    <a class="site-header-logo" href="#"><img src="assets/logo-light.png" alt="MAISARA"></a>
+    <div class="site-header-left">
+      <a class="site-header-logo" href="#"><img src="assets/logo-light.png" alt="MAISARA"></a>
+      <canvas class="header-viz" id="headerViz" width="240" height="88" aria-hidden="true"></canvas>
+    </div>
     <div class="hero-socials">
       <a class="icon-wrap" href="https://www.instagram.com/maisara.music/" target="_blank" rel="noopener" aria-label="Instagram">
         <div class="halo"></div>
@@ -1727,6 +1745,81 @@
     let userPaused = false;          // distinguishes intentional pause from network/browser stalls
     let autoResumeAttempts = 0;      // guard against infinite retry loops
 
+    /* ── Audio visualizer (header canvas, mirrors the live audio) ── */
+    const vizCanvas = document.getElementById('headerViz');
+    const vizCtx    = vizCanvas.getContext('2d');
+    let audioCtx    = null;
+    let analyser    = null;
+    let freqData    = null;
+    let vizPlaying  = false;         // gates the drawing between active / idle states
+
+    function ensureAudioGraph() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.78;
+      analyser.connect(audioCtx.destination);
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+    }
+
+    function attachAnalyser(mediaEl) {
+      ensureAudioGraph();
+      try {
+        const src = audioCtx.createMediaElementSource(mediaEl);
+        src.connect(analyser);
+      } catch (err) {
+        // createMediaElementSource throws if the element was already wired
+        // — harmless here since each track gets a fresh element.
+        console.warn('Analyser attach skipped:', err.message);
+      }
+    }
+
+    function drawVizBars() {
+      const w = vizCanvas.width;
+      const h = vizCanvas.height;
+      vizCtx.clearRect(0, 0, w, h);
+
+      if (!vizPlaying || !analyser) {
+        // Idle: subtle baseline so the slot reads as intentional, not empty.
+        vizCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+        vizCtx.lineWidth = 1;
+        vizCtx.beginPath();
+        vizCtx.moveTo(0, h - 0.5);
+        vizCtx.lineTo(w, h - 0.5);
+        vizCtx.stroke();
+        return;
+      }
+
+      analyser.getByteFrequencyData(freqData);
+      const usable      = Math.floor(freqData.length * 0.66);
+      const barCount    = 12;
+      const binsPerBar  = Math.max(1, Math.floor(usable / barCount));
+      const startOffset = binsPerBar; // skip the always-saturated sub-bass band
+      const gap         = w * 0.055;
+      const barW        = (w - gap * (barCount - 1)) / barCount;
+
+      vizCtx.fillStyle = 'rgba(255,255,255,0.62)';
+      for (let i = 0; i < barCount; i++) {
+        let sum = 0;
+        for (let j = 0; j < binsPerBar; j++) sum += freqData[startOffset + i * binsPerBar + j];
+        const avg = sum / binsPerBar;
+        const barH = Math.max(barW, (avg / 255) * h);
+        const x = i * (barW + gap);
+        const y = h - barH;
+        const r = barW / 2;
+        vizCtx.beginPath();
+        vizCtx.roundRect(x, y, barW, barH, r);
+        vizCtx.fill();
+      }
+    }
+
+    function vizLoop() {
+      drawVizBars();
+      requestAnimationFrame(vizLoop);
+    }
+    vizLoop();
+
     function fmt(s) {
       if (!isFinite(s)) return '0:00';
       const m = Math.floor(s / 60);
@@ -1746,7 +1839,13 @@
       infoSub.textContent     = trackEl.dataset.sub;
       infoPanel.classList.add('armed');
 
-      audio = new Audio(trackEl.dataset.src);
+      // crossOrigin must be set *before* src so the fetch goes out with CORS;
+      // the AnalyserNode needs same-origin-or-CORS data to read samples.
+      audio = new Audio();
+      audio.crossOrigin = 'anonymous';
+      audio.src = trackEl.dataset.src;
+      attachAnalyser(audio);
+
       audio.addEventListener('loadedmetadata', () => { infoDur.textContent = fmt(audio.duration); });
 
       // 'playing' = actually progressing audio (not just .play() called)
@@ -1755,6 +1854,8 @@
         vinyl.classList.remove('loading');
         trackEl.classList.add('playing');
         autoResumeAttempts = 0;
+        vizPlaying = true;
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       });
 
       // Buffer ran dry mid-playback — show pulse, browser will auto-resume.
@@ -1776,6 +1877,7 @@
           vinyl.classList.remove('loading');
           trackEl.classList.remove('playing');
           userPaused = false;
+          vizPlaying = false;
         } else if (autoResumeAttempts < 3) {
           // Browser/network-induced pause — try to recover
           autoResumeAttempts++;
@@ -1791,6 +1893,7 @@
           vinyl.classList.remove('playing');
           vinyl.classList.remove('loading');
           trackEl.classList.remove('playing');
+          vizPlaying = false;
           console.warn('Auto-resume gave up after 3 attempts');
         }
       });
@@ -1802,11 +1905,13 @@
         infoFill.style.width = '0%';
         infoCurrent.textContent = '0:00';
         autoResumeAttempts = 0;
+        vizPlaying = false;
       });
       audio.addEventListener('error', () => {
         vinyl.classList.remove('loading');
         vinyl.classList.remove('playing');
         trackEl.classList.remove('playing');
+        vizPlaying = false;
         console.warn('Audio error:', trackEl.dataset.src);
       });
       audio.addEventListener('timeupdate', () => {

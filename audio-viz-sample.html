@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<!--
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ SAMPLE FILE — NOT THE LIVE SITE                                  │
+  │                                                                  │
+  │ Tries three visualizer styles next to the white logo at          │
+  │ logo-scale (≈44px tall), with a magnified preview so the         │
+  │ details are inspectable. Switch with the buttons.                │
+  │                                                                  │
+  │ Audio = warmup-01 from R2. Web Audio AnalyserNode taps the       │
+  │ <audio> element's stream; `crossOrigin="anonymous"` on the       │
+  │ tag is required so the analyser can actually read samples.       │
+  └──────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAISARA — Audio Visualizer Sample</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0e1a;
+      --bg-alt: #0c1120;
+      --accent: #74BFFF;
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.5);
+      --text-subtle: rgba(255,255,255,0.22);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    html, body {
+      width: 100vw;
+      min-height: 100vh;
+      background: var(--bg-alt);
+      color: var(--text);
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      gap: 72px;
+      padding: 80px;
+    }
+
+    .sample-marker {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(116,191,255,0.7);
+      background: rgba(10,14,26,0.7);
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Live-scale row: logo + viz at the size they'd appear in the header ── */
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .header-row img {
+      height: 44px;
+      width: auto;
+      display: block;
+    }
+
+    .live-canvas {
+      width: 120px;
+      height: 44px;
+      display: block;
+    }
+
+    /* ── Magnified preview so you can actually see the pattern ── */
+    .preview-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .preview-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .preview-canvas {
+      width: 480px;
+      height: 176px;
+      display: block;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .mode-btn,
+    .play-btn {
+      font-family: inherit;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 12px 22px;
+      cursor: pointer;
+      transition: border-color 250ms, color 250ms, background 250ms;
+    }
+
+    .mode-btn:hover,
+    .play-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(116,191,255,0.05);
+    }
+
+    .play-btn {
+      margin-left: auto;
+    }
+
+    .status {
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sample-marker">Sample · Audio visualizer · Not the live site</div>
+
+  <!-- Header-scale preview: how it'd actually look next to the logo -->
+  <div class="header-row">
+    <img src="assets/logo-light.png" alt="MAISARA logo">
+    <canvas class="live-canvas" id="liveCanvas" width="240" height="88"></canvas>
+  </div>
+
+  <!-- Magnified preview for detail -->
+  <div class="preview-wrap">
+    <span class="preview-label">Magnified (3.6×)</span>
+    <canvas class="preview-canvas" id="previewCanvas" width="960" height="352"></canvas>
+  </div>
+
+  <!-- Controls: mode switcher + play -->
+  <div class="controls">
+    <button class="mode-btn active" data-mode="bars">Bars</button>
+    <button class="mode-btn"        data-mode="waveform">Waveform</button>
+    <button class="mode-btn"        data-mode="dots">Dots</button>
+    <span class="status" id="status">Click play, then switch modes while it runs</span>
+    <button class="play-btn" id="playBtn">▶ Play</button>
+  </div>
+
+  <!-- crossOrigin so the AnalyserNode can read sample data from R2 -->
+  <audio id="audio" crossorigin="anonymous"
+         src="https://pub-c18c28ff9d714d3fb630c2546d440564.r2.dev/warmup-01.mp3"
+         preload="auto"></audio>
+
+  <script>
+    const audio      = document.getElementById('audio');
+    const liveCanvas = document.getElementById('liveCanvas');
+    const prevCanvas = document.getElementById('previewCanvas');
+    const liveCtx    = liveCanvas.getContext('2d');
+    const prevCtx    = prevCanvas.getContext('2d');
+    const playBtn    = document.getElementById('playBtn');
+    const status     = document.getElementById('status');
+    const modeBtns   = document.querySelectorAll('.mode-btn');
+
+    let mode      = 'bars';
+    let audioCtx  = null;
+    let analyser  = null;
+    let source    = null;
+    let freqData  = null;
+    let waveData  = null;
+
+    function setupAudioGraph() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize        = 256;   // 128 frequency bins; plenty for a small viz
+      analyser.smoothingTimeConstant = 0.78;
+      source   = audioCtx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+      waveData = new Uint8Array(analyser.frequencyBinCount);
+    }
+
+    /* ── Drawers ── */
+    function drawBars(ctx, w, h) {
+      analyser.getByteFrequencyData(freqData);
+      // Use the lower 2/3 of bins — the very top frequencies are usually quiet/noise.
+      const usable  = Math.floor(freqData.length * 0.66);
+      const barCount = 12;
+      const binsPerBar = Math.max(1, Math.floor(usable / barCount));
+      // Skip the lowest band — sub-bass + DC offset stays pinned high and reads
+      // as static rather than rhythm, so the first visible bar starts one band up.
+      const startOffset = binsPerBar;
+      // Larger gap ratio + slimmer bars = airier, more refined visual.
+      const gap      = w * 0.055;
+      const barW     = (w - gap * (barCount - 1)) / barCount;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.62)';
+      for (let i = 0; i < barCount; i++) {
+        let sum = 0;
+        for (let j = 0; j < binsPerBar; j++) sum += freqData[startOffset + i * binsPerBar + j];
+        const avg = sum / binsPerBar;
+        const barH = Math.max(barW, (avg / 255) * h); // min height = barW so the pill stays a pill
+        const x = i * (barW + gap);
+        const y = h - barH;
+        const r = barW / 2; // pill ends; canvas clamps radius internally if barH < barW
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, r);
+        ctx.fill();
+      }
+    }
+
+    function drawWaveform(ctx, w, h) {
+      analyser.getByteTimeDomainData(waveData);
+      ctx.lineWidth   = Math.max(1, h * 0.018);
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineJoin    = 'round';
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      const step = w / waveData.length;
+      for (let i = 0; i < waveData.length; i++) {
+        const v = waveData[i] / 128.0;   // 0-2, centered on 1
+        const y = (v * h) / 2;
+        const x = i * step;
+        if (i === 0) ctx.moveTo(x, y);
+        else         ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function drawDots(ctx, w, h) {
+      analyser.getByteFrequencyData(freqData);
+      const usable     = Math.floor(freqData.length * 0.66);
+      const cols       = 14;
+      const rows       = 5;
+      const binsPerCol = Math.max(1, Math.floor(usable / cols));
+      const colW       = w / cols;
+      const rowH       = h / rows;
+      const dotR       = Math.min(colW, rowH) * 0.18;
+
+      for (let c = 0; c < cols; c++) {
+        let sum = 0;
+        for (let j = 0; j < binsPerCol; j++) sum += freqData[c * binsPerCol + j];
+        const avg = sum / binsPerCol;
+        // map intensity → how many rows from the bottom light up
+        const activeRows = Math.max(1, Math.round((avg / 255) * rows));
+        for (let r = 0; r < rows; r++) {
+          const lit = r < activeRows;
+          const x = c * colW + colW / 2;
+          const y = h - (r + 0.5) * rowH;
+          ctx.fillStyle = lit ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.08)';
+          ctx.beginPath();
+          ctx.arc(x, y, dotR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    /* ── Idle (paused) state: a single quiet center line ── */
+    function drawIdle(ctx, w, h) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.stroke();
+    }
+
+    function paint(ctx, w, h) {
+      ctx.clearRect(0, 0, w, h);
+      if (!analyser || audio.paused) return drawIdle(ctx, w, h);
+      if      (mode === 'bars')     drawBars(ctx, w, h);
+      else if (mode === 'waveform') drawWaveform(ctx, w, h);
+      else                          drawDots(ctx, w, h);
+    }
+
+    function loop() {
+      paint(liveCtx, liveCanvas.width, liveCanvas.height);
+      paint(prevCtx, prevCanvas.width, prevCanvas.height);
+      requestAnimationFrame(loop);
+    }
+
+    /* ── Wiring ── */
+    playBtn.addEventListener('click', async () => {
+      if (!audioCtx) setupAudioGraph();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      if (audio.paused) {
+        try {
+          await audio.play();
+          playBtn.textContent = '⏸ Pause';
+          status.textContent = 'Playing';
+        } catch (err) {
+          status.textContent = 'Play failed: ' + err.message;
+        }
+      } else {
+        audio.pause();
+        playBtn.textContent = '▶ Play';
+        status.textContent = 'Paused';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      playBtn.textContent = '▶ Play';
+      status.textContent  = 'Ended';
+    });
+
+    audio.addEventListener('error', () => {
+      status.textContent = 'Audio load error — CORS or network';
+    });
+
+    modeBtns.forEach(b => {
+      b.addEventListener('click', () => {
+        modeBtns.forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        mode = b.dataset.mode;
+      });
+    });
+
+    loop();
+  </script>
+</body>
+</html>
