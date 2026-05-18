@@ -1316,38 +1316,207 @@
        MOBILE
     ════════════════════════════════ */
     @media (max-width: 768px) {
-      .hero {
-        background-position: 50% top;
-      }
+      /* dvh tracks the dynamic viewport (excludes the iOS URL bar when shown),
+         so bottom:0 actually sits on the visible bottom edge instead of below it. */
+      .hero { background-position: 50% top; height: 100dvh; }
+      .section { min-height: 100dvh; }
 
-      .site-header { padding: 16px 24px; }
-      .site-header-logo img { height: 32px; }
-      .header-viz { width: 80px; height: 32px; }
-      .hero-brand { font-size: 1.2rem; }
+      .site-header { padding: 16px 18px; }
+      .site-header-logo img { height: 30px; }
+      .header-viz { display: none; }  /* freed up for the top-nav row */
       .hero-nav { display: none; }
       .hero-socials { display: none; }
 
-      .mobile-menu-btn { display: block; }
+      /* On mobile we drop the hamburger and reuse .side-nav as a top-nav row,
+         absolutely positioned to sit inside the site-header band, right side. */
+      .mobile-menu-btn { display: none; }
+      .mobile-popover { display: none !important; }
 
-      .hero-body {
-        padding: 0 24px 110px;
-        align-items: flex-end;
-        justify-content: flex-start;
+      .side-nav {
+        display: flex;
+        flex-direction: row;
+        position: fixed;
+        top: 0;
+        right: 14px;
+        height: 64px;          /* matches the site-header band height */
+        transform: none;
+        align-items: center;
+        gap: 10px;
+        padding: 0;
+        background: none;
+        border: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       }
 
-      .hero-cta-stack { gap: 48px; max-width: 100%; }
-      .hero-cta-body { max-width: 100%; }
-      .hero-cta--listening .hero-cta-title { font-size: clamp(1.8rem, 8vw, 2.4rem); }
-      .hero-cta--warmup    .hero-cta-title { font-size: clamp(2.2rem, 10vw, 3rem); }
+      .side-nav .numeral { display: none; }
 
+      .side-nav button {
+        grid-template-columns: auto;
+        padding: 6px 2px;
+      }
+
+      .side-nav .label {
+        grid-column: auto;
+        font-size: 0.55rem;
+        letter-spacing: 0.14em;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+
+      .side-nav button.active .label { color: var(--accent); }
+
+      /* Centered underline marks the active section. */
+      .side-nav button::before {
+        right: auto;
+        left: 50%;
+        top: auto;
+        bottom: -2px;
+        margin-right: 0;
+        transform: translateX(-50%);
+        width: 0;
+      }
+      .side-nav button.active::before { width: 18px; }
+
+      /* Tighten the header left cluster so the nav fits on the right. */
+      .site-header-left { gap: 12px; }
+      .site-header-logo img { height: 28px; }
+      .header-viz { width: 60px; height: 28px; }
+
+      /* Signature watermark has no clean home on mobile (collides with the tagline);
+         the site-header logo already carries the brand mark. */
+      .hero-brand { display: none; }
+
+      /* Hero stack on phones: tabs/tracks live in hero-body (top stack);
+         the portrait escapes to be a full-width backdrop hugging the bottom edge,
+         with the info-panel overlay riding its lower band like on desktop. */
+      /* Static + flex:auto so vinyl-wrap (absolute, display:contents parent)
+         escapes hero-body's positioning context and anchors to .hero instead. */
+      .hero-body {
+        position: static;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        padding: 108px 20px 0;   /* clears site-header (~56px) + top-nav (~36px) */
+        gap: 18px;
+        flex: 0 0 auto;
+        z-index: auto;
+      }
+
+      /* Vinyl-column becomes a transparent positioning layer that fills .hero,
+         giving vinyl-wrap a reliable bottom-edge anchor across all browsers
+         (display:contents has spotty positioning-context support in Safari). */
+      .vinyl-column {
+        position: absolute;
+        inset: 0;
+        display: block;
+        padding: 0;
+        margin: 0;
+        pointer-events: none;
+        z-index: 1;
+        grid-column: auto;
+        grid-row: auto;
+      }
+
+      .vinyl-wrap {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: auto;
+        max-height: 90dvh;
+        pointer-events: auto;
+      }
+
+      .vinyl-face {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+      }
+
+      .vinyl-face img {
+        position: static;
+        width: 100%;
+        height: auto;
+        max-height: 90dvh;
+        transform: none;
+        display: block;
+      }
+
+      /* Info panel overlays the lower band of the portrait; lifted to make room
+         for the tagline below it. */
+      .info-panel {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 52px;
+        transform: none;
+        width: 100%;
+        max-width: none;
+        background: linear-gradient(
+          to top,
+          rgba(5,8,12,0.82) 0%,
+          rgba(5,8,12,0.55) 50%,
+          rgba(5,8,12,0) 100%
+        );
+        padding: 28px 16px 16px;
+        gap: 6px;
+        opacity: 0.55;
+      }
+      .info-panel.armed { opacity: 1; }
+      .info-progress-row {
+        grid-template-columns: 36px 1fr 36px;
+        gap: 10px;
+        max-width: 320px;
+      }
+
+      .tracks-column {
+        grid-column: auto;
+        grid-row: auto;
+        height: auto;
+        max-height: none;
+        flex: 1 1 auto;
+        align-self: stretch;
+        gap: 14px;
+        --track-row-h: 60px;
+        /* Stays above the bottom-anchored photo (z-index 1). */
+        position: relative;
+        z-index: 2;
+      }
+
+      .tabs { gap: 28px; padding-bottom: 12px; }
+      .tab { font-size: 1.05rem; }
+      .tab::after { bottom: -13px; }
+
+      .tab-panel.active { max-height: calc(var(--track-row-h) * 2.5); }
+
+      .track {
+        grid-template-columns: 30px 1fr 32px;
+        column-gap: 12px;
+        padding: 12px 4px;
+      }
+      .track-title { font-size: 1.02rem; }
+      .track-counter { height: 24px; }
+      .track-viz { width: 22px; height: 22px; }
+      .track-listen { width: 32px; height: 32px; }
+      .track-sub { font-size: 0.5rem; letter-spacing: 0.18em; }
+
+      /* Tagline sits at the very bottom of the hero, below the now-playing panel. */
       .hero-tagline {
-        bottom: 24px;
+        position: absolute;
+        z-index: 5;
+        left: 0;
+        right: 0;
+        bottom: 18px;
+        text-align: center;
         padding: 0 24px;
-        font-size: 0.95rem;
+        margin: 0;
+        font-size: 0.9rem;
         letter-spacing: 0.08em;
       }
-
-      .side-nav { display: none; }
 
       .section { padding: 80px 6vw; }
 
