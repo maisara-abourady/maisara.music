@@ -146,8 +146,11 @@
     }
 
     /* In-DOM bg image (replaces CSS url() on .hero). Sits behind every other
-       hero child via z-index -1; its onload is the signal that the hero is
-       paintable, which the loader hide-chain waits on. */
+       hero child via z-index -1. The loader hide-chain waits on its onload
+       AND on a PerformanceObserver 'element' entry (elementtiming attr),
+       which is the truest causal signal that the browser has actually
+       painted it. will-change promotes it to its own compositor layer so
+       paint happens even while the loader covers it. */
     .hero-bg-image {
       position: absolute;
       inset: 0;
@@ -157,6 +160,7 @@
       object-position: center;
       z-index: -1;
       pointer-events: none;
+      will-change: transform;
     }
 
     /* ── Global sticky header: logo (left) + socials (right) ──
@@ -1678,8 +1682,9 @@
   ══════════════════════════ -->
   <div class="hero">
 
-    <!-- Background image as a real DOM element so the loader can wait on its onload -->
-    <img class="hero-bg-image" src="assets/rest-bg.png" alt="" aria-hidden="true">
+    <!-- Background image as a real DOM element so the loader can wait on its onload
+         AND on PerformanceObserver's 'element' entry (via elementtiming). -->
+    <img class="hero-bg-image" src="assets/rest-bg.png" elementtiming="hero-bg" alt="" aria-hidden="true">
 
     <!-- Brand floats over the body, centered, anchored against .hero -->
     <a class="hero-brand" href="#">MAISARA</a>
@@ -1910,9 +1915,12 @@
         loader.classList.add('is-hidden');
         setTimeout(() => loader.remove(), 600);
       }
-      // Causal chain: wait until the in-DOM <img.hero-bg-image> reports load
-      // (browser has actually placed the decoded image in the document tree),
-      // plus background-decode of vinyl-face + logo, then double-RAF for paint.
+      // Causal chain (strongest-to-weakest signals):
+      //   1. PerformanceObserver 'element' entry on hero-bg's elementtiming
+      //      — fires AFTER the browser has actually painted the element.
+      //   2. <img>.onload — image is in the document tree and queued for paint.
+      //   3. Double RAF — at least one full paint cycle has run.
+      // Plus background-decode of vinyl-face + logo so they're cached too.
       function whenAll(promises, done) {
         let left = promises.length;
         if (!left) return done();
@@ -1920,11 +1928,30 @@
                                     () => { if (--left <= 0) done(); }));
       }
       const heroBgImg = document.querySelector('.hero-bg-image');
-      const heroBgReady = new Promise(res => {
+      const heroBgLoaded = new Promise(res => {
         if (!heroBgImg) return res();
         if (heroBgImg.complete && heroBgImg.naturalWidth > 0) return res();
         heroBgImg.addEventListener('load', () => res(), { once: true });
         heroBgImg.addEventListener('error', () => res(), { once: true });
+      });
+      const heroBgPainted = new Promise(res => {
+        if (typeof PerformanceObserver !== 'function') return res();
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; res(); } };
+        try {
+          const po = new PerformanceObserver(list => {
+            for (const entry of list.getEntries()) {
+              if (entry.identifier === 'hero-bg') {
+                try { po.disconnect(); } catch (_) {}
+                finish();
+                return;
+              }
+            }
+          });
+          po.observe({ type: 'element', buffered: true });
+          // Browsers without Element Timing won't ever fire — bail after 6s.
+          setTimeout(() => { try { po.disconnect(); } catch (_) {} finish(); }, 6000);
+        } catch (_) { finish(); }
       });
       function preload(src) {
         return new Promise(res => {
@@ -1935,10 +1962,11 @@
         });
       }
       whenAll(
-        [heroBgReady, preload('assets/vinyl-face.png'), preload('assets/logo-light.png')],
+        [heroBgLoaded, heroBgPainted,
+         preload('assets/vinyl-face.png'), preload('assets/logo-light.png')],
         () => requestAnimationFrame(() => requestAnimationFrame(hide))
       );
-      setTimeout(hide, 10000);
+      setTimeout(hide, 12000);
     })();
 
     /* ════════════════════════════════
