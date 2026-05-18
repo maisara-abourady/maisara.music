@@ -1337,11 +1337,13 @@
         flex-direction: row;
         position: fixed;
         top: 0;
-        right: 14px;
-        height: 64px;          /* matches the site-header band height */
+        left: 78px;            /* clears site-header padding (18) + logo (~30) + gap */
+        right: 18px;
+        height: 62px;          /* matches site-header band height (16 + 30 + 16) */
         transform: none;
         align-items: center;
-        gap: 10px;
+        justify-content: space-between;
+        gap: 0;
         padding: 0;
         background: none;
         border: none;
