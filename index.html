@@ -734,6 +734,10 @@
       position: relative;
     }
 
+    /* Disabled chapters: hover styling still applies (color shift),
+       but the cursor signals inert and clicks no-op via JS. */
+    .side-nav button[data-disabled="true"] { cursor: default; }
+
     .side-nav .numeral {
       font-family: 'DM Sans', sans-serif;
       font-size: 0.5rem;
@@ -1382,24 +1386,23 @@
       <span class="numeral">I</span>
       <span class="label">Listen</span>
     </button>
-    <!-- Other chapter items disabled for now; restore when sections are ready.
-    <button data-section="philosophy" onclick="scrollToSection('philosophy')">
+    <!-- Other chapters visible but inert until their sections are designed. -->
+    <button data-section="philosophy" data-disabled="true" aria-disabled="true">
       <span class="numeral">II</span>
       <span class="label">Philosophy</span>
     </button>
-    <button data-section="style" onclick="scrollToSection('style')">
+    <button data-section="style" data-disabled="true" aria-disabled="true">
       <span class="numeral">III</span>
       <span class="label">Sound</span>
     </button>
-    <button data-section="projects" onclick="scrollToSection('projects')">
+    <button data-section="projects" data-disabled="true" aria-disabled="true">
       <span class="numeral">IV</span>
       <span class="label">Discography</span>
     </button>
-    <button data-section="bookings" onclick="scrollToSection('bookings')">
+    <button data-section="bookings" data-disabled="true" aria-disabled="true">
       <span class="numeral">V</span>
       <span class="label">Bookings</span>
     </button>
-    -->
   </nav>
 
   <!-- ══════════════════════════
@@ -1931,6 +1934,11 @@
     ════════════════════════════════ */
     const sideNavBtns = document.querySelectorAll('.side-nav button');
     const heroEl = document.querySelector('.hero');
+
+    // Buttons flagged data-disabled stay hoverable but do nothing on click.
+    document.querySelectorAll('.side-nav button[data-disabled="true"]').forEach(btn => {
+      btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
+    });
 
     // Map: observed element → side-nav data-section value
     const sectionTargets = [
