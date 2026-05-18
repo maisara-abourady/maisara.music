@@ -75,6 +75,41 @@
       transition: width 60ms linear;
     }
 
+    /* ── First-paint loader ──
+       Mimics the hero backdrop using only CSS (navy base + cyan radial glow
+       at upper-right, matching rest-bg.png's character) so it appears
+       instantly before any image is fetched. Hidden once window.load fires. */
+    #pageLoader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #0c1120;
+      background-image:
+        radial-gradient(circle at 86% 14%, rgba(116,191,255,0.12), transparent 55%),
+        radial-gradient(circle at 18% 88%, rgba(116,191,255,0.05), transparent 45%);
+      opacity: 1;
+      transition: opacity 520ms ease;
+    }
+    #pageLoader.is-hidden { opacity: 0; pointer-events: none; }
+
+    .loader-mark {
+      font-family: 'Maisara Signature', 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(3rem, 12vw, 6rem);
+      font-weight: 400;
+      letter-spacing: 0.22em;
+      color: rgba(255,255,255,0.7);
+      line-height: 1;
+      margin-right: -0.22em; /* cancel trailing letter-spacing */
+      animation: loaderBreathe 2.6s ease-in-out infinite;
+    }
+    @keyframes loaderBreathe {
+      0%, 100% { opacity: 0.38; }
+      50%      { opacity: 0.95; }
+    }
+
     /* ════════════════════════════════
        HERO  (=listen surface: vinyl player + tabs + tracks)
        Pinned to 100vh, no internal scroll.
@@ -1555,6 +1590,11 @@
 
 <body>
 
+  <!-- First-paint loader (covers everything until window.load fires) -->
+  <div id="pageLoader" aria-hidden="true">
+    <span class="loader-mark">MAISARA</span>
+  </div>
+
   <!-- Scroll progress bar -->
   <div id="scrollProgress"></div>
 
@@ -1594,21 +1634,13 @@
       <span class="numeral">I</span>
       <span class="label">Listen</span>
     </button>
-    <!-- Other chapters visible but inert until their sections are designed. -->
-    <button data-section="philosophy" data-disabled="true" aria-disabled="true">
-      <span class="numeral">II</span>
-      <span class="label">Philosophy</span>
-    </button>
-    <button data-section="style" data-disabled="true" aria-disabled="true">
-      <span class="numeral">III</span>
-      <span class="label">Sound</span>
-    </button>
+    <!-- Philosophy + Sound entry points removed for now (sections kept in DOM). -->
     <button data-section="projects" data-disabled="true" aria-disabled="true">
-      <span class="numeral">IV</span>
+      <span class="numeral">II</span>
       <span class="label">Discography</span>
     </button>
     <button data-section="bookings" data-disabled="true" aria-disabled="true">
-      <span class="numeral">V</span>
+      <span class="numeral">III</span>
       <span class="label">Bookings</span>
     </button>
   </nav>
@@ -1830,6 +1862,26 @@
 
 
   <script>
+    /* ════════════════════════════════
+       PAGE LOADER
+       Hides once everything (images, fonts, scripts) has loaded.
+       Safety fallback removes it after 6s in case window.load never fires.
+    ════════════════════════════════ */
+    (function () {
+      const loader = document.getElementById('pageLoader');
+      if (!loader) return;
+      let hidden = false;
+      function hide() {
+        if (hidden) return;
+        hidden = true;
+        loader.classList.add('is-hidden');
+        setTimeout(() => loader.remove(), 600);
+      }
+      if (document.readyState === 'complete') hide();
+      else window.addEventListener('load', hide);
+      setTimeout(hide, 6000);
+    })();
+
     /* ════════════════════════════════
        SCROLL INPUT LOCK
        Manual scroll (wheel, touch, nav keys) disabled.
