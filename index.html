@@ -76,9 +76,8 @@
     }
 
     /* ── First-paint loader ──
-       Mimics the hero backdrop using only CSS (navy base + cyan radial glow
-       at upper-right, matching rest-bg.png's character) so it appears
-       instantly before any image is fetched. Hidden once window.load fires. */
+       Uses the EXACT same background stack as .hero (color + radial + rest-bg.png)
+       so when it fades, the hero underneath is visually identical — no pop. */
     #pageLoader {
       position: fixed;
       inset: 0;
@@ -88,8 +87,11 @@
       justify-content: center;
       background-color: #0c1120;
       background-image:
-        radial-gradient(circle at 86% 14%, rgba(116,191,255,0.12), transparent 55%),
-        radial-gradient(circle at 18% 88%, rgba(116,191,255,0.05), transparent 45%);
+        radial-gradient(circle at 86% 14%, rgba(116,191,255,0.10), transparent 50%),
+        url('assets/rest-bg.png');
+      background-size: auto, cover;
+      background-position: center, center;
+      background-repeat: no-repeat;
       opacity: 1;
       transition: opacity 520ms ease;
     }
@@ -1900,12 +1902,17 @@
         'assets/logo-light.png',
       ];
       let remaining = critical.length;
-      function tick() { if (--remaining <= 0) hide(); }
+      function tick() {
+        if (--remaining > 0) return;
+        // Two RAFs after decode = the browser has painted the cached image
+        // onto .hero's CSS background, so fading the loader reveals it cleanly.
+        requestAnimationFrame(() => requestAnimationFrame(hide));
+      }
       critical.forEach(src => {
         const img = new Image();
-        img.onload = tick;
-        img.onerror = tick;
         img.src = src;
+        if (img.decode) img.decode().then(tick).catch(tick);
+        else { img.onload = tick; img.onerror = tick; }
       });
       setTimeout(hide, 10000);
     })();
