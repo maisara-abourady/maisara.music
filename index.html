@@ -100,14 +100,29 @@
       font-size: clamp(3rem, 12vw, 6rem);
       font-weight: 400;
       letter-spacing: 0.22em;
-      color: rgba(255,255,255,0.7);
       line-height: 1;
-      margin-right: -0.22em; /* cancel trailing letter-spacing */
-      animation: loaderBreathe 2.6s ease-in-out infinite;
+      margin-right: -0.22em;       /* cancel trailing letter-spacing */
+      /* Polished-metal shimmer: a bright highlight sweeps across the glyphs
+         on a loop, conveying "still working" while we wait. */
+      background: linear-gradient(
+        100deg,
+        rgba(255,255,255,0.18) 0%,
+        rgba(255,255,255,0.18) 38%,
+        rgba(255,255,255,0.95) 48%,
+        rgba(116,191,255,0.95) 53%,
+        rgba(255,255,255,0.18) 63%,
+        rgba(255,255,255,0.18) 100%
+      );
+      background-size: 280% 100%;
+      -webkit-background-clip: text;
+              background-clip: text;
+      -webkit-text-fill-color: transparent;
+              color: transparent;
+      animation: loaderShimmer 2.4s ease-in-out infinite;
     }
-    @keyframes loaderBreathe {
-      0%, 100% { opacity: 0.38; }
-      50%      { opacity: 0.95; }
+    @keyframes loaderShimmer {
+      0%   { background-position: 110% 50%; }
+      100% { background-position: -10%  50%; }
     }
 
     /* ════════════════════════════════
@@ -1372,7 +1387,7 @@
         flex-direction: row;
         position: fixed;
         top: 0;
-        left: 78px;            /* clears site-header padding (18) + logo (~30) + gap */
+        left: 108px;           /* clears site-header padding (18) + logo (~30) + breathing room */
         right: 18px;
         height: 62px;          /* matches site-header band height (16 + 30 + 16) */
         transform: none;
@@ -1864,8 +1879,10 @@
   <script>
     /* ════════════════════════════════
        PAGE LOADER
-       Hides once everything (images, fonts, scripts) has loaded.
-       Safety fallback removes it after 6s in case window.load never fires.
+       Explicitly preloads the critical hero images and waits for ALL of them
+       (load OR error) before hiding. window.load can fire before CSS
+       background-images are decoded, so we don't rely on it alone.
+       Safety: never hangs past 10s.
     ════════════════════════════════ */
     (function () {
       const loader = document.getElementById('pageLoader');
@@ -1877,9 +1894,20 @@
         loader.classList.add('is-hidden');
         setTimeout(() => loader.remove(), 600);
       }
-      if (document.readyState === 'complete') hide();
-      else window.addEventListener('load', hide);
-      setTimeout(hide, 6000);
+      const critical = [
+        'assets/rest-bg.png',
+        'assets/vinyl-face.png',
+        'assets/logo-light.png',
+      ];
+      let remaining = critical.length;
+      function tick() { if (--remaining <= 0) hide(); }
+      critical.forEach(src => {
+        const img = new Image();
+        img.onload = tick;
+        img.onerror = tick;
+        img.src = src;
+      });
+      setTimeout(hide, 10000);
     })();
 
     /* ════════════════════════════════
