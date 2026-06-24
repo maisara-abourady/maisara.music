@@ -1,0 +1,8 @@
+# Keep source/config out of the publicly-served static assets bundle.
+wrangler.jsonc
+wrangler.toml
+.assetsignore
+worker
+schema.sql
+CLAUDE.md
+*.md

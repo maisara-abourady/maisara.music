@@ -1,0 +1,27 @@
+{
+  // NOTE: "name" must match your EXISTING Worker exactly, or a new Worker is created.
+  "name": "maisara-music",
+  "main": "worker/index.js",
+  "compatibility_date": "2025-11-01",
+
+  // Serve the repo as the static site; the Worker runs only for non-asset paths
+  // (i.e. /learn/api/*). The .assetsignore file keeps source/config out of the bundle.
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "maisara-learn",
+      "database_id": "28dabcad-1310-43ed-99ac-cc82fdfe0071"
+    }
+  ],
+
+  // Non-secret. The matching GOOGLE_CLIENT_SECRET is set as an encrypted secret,
+  // NOT here (dashboard → Variables and Secrets, or `wrangler secret put`).
+  "vars": {
+    "GOOGLE_CLIENT_ID": "547229114233-n35cbvmhe52c23pe1tnc5o6bnr0isit5.apps.googleusercontent.com"
+  }
+}
