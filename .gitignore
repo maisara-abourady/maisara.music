@@ -12,3 +12,8 @@
 
 # Local audio source files — playback is served from R2, not the repo
 assets/audio/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
