@@ -109,17 +109,22 @@ async function authCallback(request, env, url) {
   if (!sub) return new Response('No subject in token', { status: 502 })
 
   const now = nowSec()
+  // Role is derived from the ADMIN_EMAILS allowlist on every login, so promotion
+  // or demotion takes effect the next time the user signs in.
+  const role = isAdminEmail(claims.email, env) ? 'admin' : 'user'
   const existing = await env.DB.prepare('SELECT id FROM users WHERE google_sub = ?').bind(sub).first()
   let userId
   if (existing) {
     userId = existing.id
-    await env.DB.prepare('UPDATE users SET email = ?, name = ?, picture = ? WHERE id = ?')
-      .bind(claims.email || null, claims.name || null, claims.picture || null, userId)
+    await env.DB.prepare('UPDATE users SET email = ?, name = ?, picture = ?, role = ? WHERE id = ?')
+      .bind(claims.email || null, claims.name || null, claims.picture || null, role, userId)
       .run()
   } else {
     userId = crypto.randomUUID()
-    await env.DB.prepare('INSERT INTO users (id, google_sub, email, name, picture, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(userId, sub, claims.email || null, claims.name || null, claims.picture || null, now)
+    await env.DB.prepare(
+      'INSERT INTO users (id, google_sub, email, name, picture, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    )
+      .bind(userId, sub, claims.email || null, claims.name || null, claims.picture || null, role, now)
       .run()
   }
 
@@ -218,11 +223,20 @@ function nowSec() {
   return Math.floor(Date.now() / 1000)
 }
 
+function isAdminEmail(email, env) {
+  if (!email || !env.ADMIN_EMAILS) return false
+  const target = email.trim().toLowerCase()
+  return env.ADMIN_EMAILS.split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(target)
+}
+
 async function getSessionUser(request, env) {
   const sid = getCookie(request, 'learn_session')
   if (!sid) return null
   const row = await env.DB.prepare(
-    `SELECT u.id AS id, u.email AS email, u.name AS name, u.picture AS picture, s.expires_at AS expires_at
+    `SELECT u.id AS id, u.email AS email, u.name AS name, u.picture AS picture, u.role AS role, s.expires_at AS expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id = ?`
   )
@@ -233,5 +247,5 @@ async function getSessionUser(request, env) {
     await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(sid).run()
     return null
   }
-  return { id: row.id, email: row.email, name: row.name, picture: row.picture }
+  return { id: row.id, email: row.email, name: row.name, picture: row.picture, role: row.role || 'user' }
 }

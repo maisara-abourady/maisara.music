@@ -1,6 +1,6 @@
 -- D1 schema for the /learn app (database binding: DB).
 -- Run once in the Cloudflare dashboard D1 console, or:
---   wrangler d1 execute maisara-learn --remote --file=schema.sql
+--   wrangler d1 execute music-learn --remote --file=schema.sql
 
 CREATE TABLE IF NOT EXISTS users (
   id          TEXT PRIMARY KEY,
@@ -8,8 +8,13 @@ CREATE TABLE IF NOT EXISTS users (
   email       TEXT,
   name        TEXT,
   picture     TEXT,
+  role        TEXT NOT NULL DEFAULT 'user',
   created_at  INTEGER NOT NULL
 );
+
+-- If the users table already exists (created before roles), run this once
+-- instead of the CREATE above:
+--   ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
 
 CREATE TABLE IF NOT EXISTS sessions (
   id          TEXT PRIMARY KEY,
