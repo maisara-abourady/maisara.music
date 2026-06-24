@@ -98,7 +98,10 @@ async function authCallback(request, env, url) {
       grant_type: 'authorization_code',
     }),
   })
-  if (!tokenRes.ok) return new Response('Token exchange failed', { status: 502 })
+  if (!tokenRes.ok) {
+    const detail = await tokenRes.text()
+    return new Response(`Token exchange failed (${tokenRes.status}): ${detail}`, { status: 502 })
+  }
 
   const tokens = await tokenRes.json()
   const claims = decodeJwtPayload(tokens.id_token)
